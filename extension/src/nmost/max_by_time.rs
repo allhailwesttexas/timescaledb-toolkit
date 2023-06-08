@@ -1,4 +1,4 @@
-use pgx::{iter::TableIterator, *};
+use pgrx::{iter::TableIterator, *};
 
 use crate::nmost::max_time::*;
 use crate::nmost::*;
@@ -11,7 +11,7 @@ use crate::{
 
 use std::cmp::Reverse;
 
-type MaxByTimeTransType = NMostByTransState<Reverse<pg_sys::TimestampTz>>;
+type MaxByTimeTransType = NMostByTransState<Reverse<pgrx::pg_sys::TimestampTz>>;
 
 pg_type! {
     #[derive(Debug)]
@@ -33,7 +33,7 @@ impl<'input> From<MaxByTimeTransType> for MaxByTimes<'input> {
                     values: val_ary
                         .into_iter()
                         .map(|x| x.0)
-                        .collect::<Vec<pg_sys::TimestampTz>>()
+                        .collect::<Vec<pgrx::pg_sys::TimestampTz>>()
                         .into()
                 })
                 .0,
@@ -49,7 +49,7 @@ pub fn max_n_by_time_trans(
     value: crate::raw::TimestampTz,
     data: AnyElement,
     capacity: i64,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     nmost_by_trans_function(
         unsafe { state.to_inner::<MaxByTimeTransType>() },
@@ -65,9 +65,9 @@ pub fn max_n_by_time_trans(
 pub fn max_n_by_time_rollup_trans(
     state: Internal,
     value: MaxByTimes<'static>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
-    let values: Vec<Reverse<pg_sys::TimestampTz>> = value
+    let values: Vec<Reverse<pgrx::pg_sys::TimestampTz>> = value
         .values
         .values
         .clone()

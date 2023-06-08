@@ -4,9 +4,9 @@ use std::{
     mem::size_of,
 };
 
-use pgx::*;
+use pgrx::*;
 
-use pg_sys::{Datum, Oid};
+use pgrx::pg_sys::{Datum, NullableDatum, Oid};
 
 use crate::datum_utils::{deep_copy_datum, DatumHashBuilder};
 
@@ -38,30 +38,30 @@ impl PartialEq for PgAnyElement {
             } else {
                 // TODO JOSH can we avoid the type cache lookup here
                 let typ = self.typoid;
-                let tentry = pg_sys::lookup_type_cache(typ, pg_sys::TYPECACHE_EQ_OPR_FINFO as _);
+                let tentry = pgrx::pg_sys::lookup_type_cache(typ, pgrx::pg_sys::TYPECACHE_EQ_OPR_FINFO as _);
 
                 let flinfo = if (*tentry).eq_opr_finfo.fn_addr.is_some() {
                     &(*tentry).eq_opr_finfo
                 } else {
-                    pgx::error!("no equality function");
+                    pgrx::error!("no equality function");
                 };
 
-                let size = size_of::<pg_sys::FunctionCallInfoBaseData>()
-                    + size_of::<pg_sys::NullableDatum>() * 2;
-                let mut info = pg_sys::palloc0(size) as pg_sys::FunctionCallInfo;
+                let size = size_of::<pgrx::pg_sys::FunctionCallInfoBaseData>()
+                    + size_of::<pgrx::pg_sys::NullableDatum>() * 2;
+                let mut info = pgrx::pg_sys::palloc0(size) as pgrx::pg_sys::FunctionCallInfo;
 
-                (*info).flinfo = flinfo as *const pg_sys::FmgrInfo as *mut pg_sys::FmgrInfo;
+                (*info).flinfo = flinfo as *const pgrx::pg_sys::FmgrInfo as *mut pgrx::pg_sys::FmgrInfo;
                 (*info).context = std::ptr::null_mut();
                 (*info).resultinfo = std::ptr::null_mut();
                 (*info).fncollation = (*tentry).typcollation;
                 (*info).isnull = false;
                 (*info).nargs = 2;
 
-                (*info).args.as_mut_slice(2)[0] = pg_sys::NullableDatum {
+                (*info).args.as_mut_slice(2)[0] = NullableDatum {
                     value: self.datum,
                     isnull: false,
                 };
-                (*info).args.as_mut_slice(2)[1] = pg_sys::NullableDatum {
+                (*info).args.as_mut_slice(2)[1] = pgrx::pg_sys::NullableDatum {
                     value: other.datum,
                     isnull: false,
                 };

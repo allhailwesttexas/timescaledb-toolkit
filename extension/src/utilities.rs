@@ -1,5 +1,5 @@
 use crate::raw::TimestampTz;
-use pgx::prelude::*;
+use pgrx::prelude::*;
 
 #[pg_extern(
     name = "generate_periodic_normal_series",
@@ -39,10 +39,10 @@ pub fn alternate_generate_periodic_normal_series(
 #[pg_extern(schema = "toolkit_experimental")]
 pub fn generate_periodic_normal_series(
     series_start: crate::raw::TimestampTz,
-    series_len: Option<i64>,      //pg_sys::Interval,
-    sample_interval: Option<i64>, //pg_sys::Interval,
+    series_len: Option<i64>,      //pgrx::pg_sys::Interval,
+    sample_interval: Option<i64>, //pgrx::pg_sys::Interval,
     base_value: Option<f64>,
-    period: Option<i64>, //pg_sys::Interval,
+    period: Option<i64>, //pgrx::pg_sys::Interval,
     periodic_magnitude: Option<f64>,
     standard_deviation: Option<f64>,
     rng_seed: Option<i64>,
@@ -126,7 +126,7 @@ $$;
 #[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]
 mod tests {
-    use pgx::*;
+    use pgrx::*;
     use pgx_macros::pg_test;
 
     #[pg_test]

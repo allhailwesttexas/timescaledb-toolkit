@@ -1,12 +1,12 @@
 #[cfg(any(test, feature = "pg_test"))]
-use pgx::*;
+use pgrx::*;
 
 #[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]
 mod tests {
     use std::collections::HashSet;
 
-    use pgx::*;
+    use pgrx::*;
     use pgx_macros::pg_test;
 
     // Test that any new features are added to the the experimental schema

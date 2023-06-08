@@ -1,6 +1,6 @@
 use std::mem::take;
 
-use pgx::{iter::TableIterator, *};
+use pgrx::{iter::TableIterator, *};
 
 use super::*;
 
@@ -144,12 +144,12 @@ pub fn arrow_run_pipeline_then_materialize<'a>(
 }
 
 #[pg_extern(immutable, parallel_safe, schema = "toolkit_experimental")]
-pub unsafe fn pipeline_materialize_support(input: pgx::Internal) -> pgx::Internal {
+pub unsafe fn pipeline_materialize_support(input: pgrx::Internal) -> pgrx::Internal {
     pipeline_support_helper(input, |old_pipeline, new_element| {
         let new_element = PipelineForceMaterialize::from_polymorphic_datum(
             new_element,
             false,
-            pg_sys::Oid::INVALID,
+            pgrx::pg_sys::Oid::INVALID,
         )
         .unwrap();
         arrow_force_materialize(old_pipeline, new_element)
@@ -169,7 +169,7 @@ ALTER FUNCTION "arrow_run_pipeline_then_materialize" SUPPORT toolkit_experimenta
 #[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]
 mod tests {
-    use pgx::*;
+    use pgrx::*;
     use pgx_macros::pg_test;
 
     #[pg_test]

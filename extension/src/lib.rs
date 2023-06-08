@@ -46,9 +46,9 @@ mod type_builder;
 #[cfg(any(test, feature = "pg_test"))]
 mod aggregate_builder_tests;
 
-use pgx::*;
+use pgrx::*;
 
-pgx::pg_module_magic!();
+pgrx::pg_module_magic!();
 
 #[pg_guard]
 pub extern "C" fn _PG_init() {

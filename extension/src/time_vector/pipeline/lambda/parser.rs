@@ -1,6 +1,6 @@
 use std::{collections::HashMap, ffi::CString};
 
-use pgx::*;
+use pgrx::*;
 
 use super::*;
 
@@ -369,38 +369,38 @@ fn parse_timestamptz(val: &str) -> i64 {
     //       uncallable with DirectFunctionCall(). Is there a way to
     //       export both?
     extern "C" {
-        fn timestamptz_in(fcinfo: pg_sys::FunctionCallInfo) -> pg_sys::Datum;
+        fn timestamptz_in(fcinfo: pgrx::pg_sys::FunctionCallInfo) -> pgrx::pg_sys::Datum;
     }
 
     let cstr = CString::new(val).unwrap();
     let parsed_time = unsafe {
-        pg_sys::DirectFunctionCall3Coll(
+        pgrx::pg_sys::DirectFunctionCall3Coll(
             Some(timestamptz_in),
-            pg_sys::InvalidOid as _,
-            pg_sys::Datum::from(cstr.as_ptr()),
-            pg_sys::Datum::from(pg_sys::InvalidOid),
-            pg_sys::Datum::from(-1i32),
+            pgrx::pg_sys::InvalidOid as _,
+            pgrx::pg_sys::Datum::from(cstr.as_ptr()),
+            pgrx::pg_sys::Datum::from(pgrx::pg_sys::InvalidOid),
+            pgrx::pg_sys::Datum::from(-1i32),
         )
     };
     parsed_time.value() as _
 }
 
-fn parse_interval(val: &str) -> *mut pg_sys::Interval {
+fn parse_interval(val: &str) -> *mut pgrx::pg_sys::Interval {
     // FIXME pgx wraps all functions in rust wrappers, which makes them
     //       uncallable with DirectFunctionCall(). Is there a way to
     //       export both?
     extern "C" {
-        fn interval_in(fcinfo: pg_sys::FunctionCallInfo) -> pg_sys::Datum;
+        fn interval_in(fcinfo: pgrx::pg_sys::FunctionCallInfo) -> pgrx::pg_sys::Datum;
     }
 
     let cstr = CString::new(val).unwrap();
     let parsed_interval = unsafe {
-        pg_sys::DirectFunctionCall3Coll(
+        pgrx::pg_sys::DirectFunctionCall3Coll(
             Some(interval_in),
-            pg_sys::InvalidOid as _,
-            pg_sys::Datum::from(cstr.as_ptr()),
-            pg_sys::Datum::from(pg_sys::InvalidOid),
-            pg_sys::Datum::from(-1i32),
+            pgrx::pg_sys::InvalidOid as _,
+            pgrx::pg_sys::Datum::from(cstr.as_ptr()),
+            pgrx::pg_sys::Datum::from(pgrx::pg_sys::InvalidOid),
+            pgrx::pg_sys::Datum::from(-1i32),
         )
     };
     parsed_interval.cast_mut_ptr()

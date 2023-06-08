@@ -1,6 +1,6 @@
 use std::mem::take;
 
-use pgx::*;
+use pgrx::*;
 
 use counter_agg::CounterSummaryBuilder;
 
@@ -164,7 +164,7 @@ pub fn pipeline_stats_agg() -> toolkit_experimental::PipelineThenStatsAgg<'stati
 pub unsafe fn pipeline_stats_agg_support(input: Internal) -> Internal {
     pipeline_support_helper(input, |old_pipeline, new_element| {
         let new_element =
-            PipelineThenStatsAgg::from_polymorphic_datum(new_element, false, pg_sys::Oid::INVALID)
+            PipelineThenStatsAgg::from_polymorphic_datum(new_element, false, pgrx::pg_sys::Oid::INVALID)
                 .unwrap();
         finalize_with_stats_agg(old_pipeline, new_element)
             .into_datum()
@@ -260,7 +260,7 @@ pub fn finalize_with_sum<'e>(
 pub unsafe fn pipeline_sum_support(input: Internal) -> Internal {
     pipeline_support_helper(input, |old_pipeline, new_element| {
         let new_element =
-            PipelineThenSum::from_polymorphic_datum(new_element, false, pg_sys::Oid::INVALID)
+            PipelineThenSum::from_polymorphic_datum(new_element, false, pgrx::pg_sys::Oid::INVALID)
                 .unwrap();
         finalize_with_sum(old_pipeline, new_element)
             .into_datum()
@@ -352,7 +352,7 @@ pub fn finalize_with_average<'e>(
 pub unsafe fn pipeline_average_support(input: Internal) -> Internal {
     pipeline_support_helper(input, |old_pipeline, new_element| {
         let new_element =
-            PipelineThenAverage::from_polymorphic_datum(new_element, false, pg_sys::Oid::INVALID)
+            PipelineThenAverage::from_polymorphic_datum(new_element, false, pgrx::pg_sys::Oid::INVALID)
                 .unwrap();
         finalize_with_average(old_pipeline, new_element)
             .into_datum()
@@ -441,7 +441,7 @@ pub fn finalize_with_num_vals<'e>(
 pub unsafe fn pipeline_num_vals_support(input: Internal) -> Internal {
     pipeline_support_helper(input, |old_pipeline, new_element| {
         let new_element =
-            PipelineThenNumVals::from_polymorphic_datum(new_element, false, pg_sys::Oid::INVALID)
+            PipelineThenNumVals::from_polymorphic_datum(new_element, false, pgrx::pg_sys::Oid::INVALID)
                 .unwrap();
         finalize_with_num_vals(old_pipeline, new_element)
             .into_datum()
@@ -528,7 +528,7 @@ pub unsafe fn pipeline_counter_agg_support(input: Internal) -> Internal {
         let new_element = PipelineThenCounterAgg::from_polymorphic_datum(
             new_element,
             false,
-            pg_sys::Oid::INVALID,
+            pgrx::pg_sys::Oid::INVALID,
         )
         .unwrap();
         finalize_with_counter_agg(old_pipeline, new_element)
@@ -616,7 +616,7 @@ pub unsafe fn pipeline_hyperloglog_support(input: Internal) -> Internal {
         let new_element = PipelineThenHyperLogLog::from_polymorphic_datum(
             new_element,
             false,
-            pg_sys::Oid::INVALID,
+            pgrx::pg_sys::Oid::INVALID,
         )
         .unwrap();
         finalize_with_hyperloglog(old_pipeline, new_element)
@@ -694,7 +694,7 @@ pub unsafe fn pipeline_percentile_agg_support(input: Internal) -> Internal {
         let new_element = PipelineThenPercentileAgg::from_polymorphic_datum(
             new_element,
             false,
-            pg_sys::Oid::INVALID,
+            pgrx::pg_sys::Oid::INVALID,
         )
         .unwrap();
         finalize_with_percentile_agg(old_pipeline, new_element)
@@ -717,7 +717,7 @@ ALTER FUNCTION "arrow_run_pipeline_then_percentile_agg" SUPPORT toolkit_experime
 #[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]
 mod tests {
-    use pgx::*;
+    use pgrx::*;
     use pgx_macros::pg_test;
 
     #[pg_test]

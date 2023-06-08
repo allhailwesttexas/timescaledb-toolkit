@@ -1,4 +1,4 @@
-use pgx::*;
+use pgrx::*;
 use twofloat::TwoFloat;
 
 use crate::{
@@ -142,7 +142,7 @@ pub fn stats2d_trans_deserialize_inner(bytes: bytea) -> Inner<StatsSummary2D<'st
 pub fn stats1d_trans<'s>(
     state: Internal,
     val: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     stats1d_trans_inner(unsafe { state.to_inner() }, val, fcinfo).internal()
 }
@@ -150,14 +150,14 @@ pub fn stats1d_trans<'s>(
 pub fn stats1d_tf_trans<'s>(
     state: Internal,
     val: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     stats1d_tf_trans_inner(unsafe { state.to_inner() }, val, fcinfo).internal()
 }
 pub fn stats1d_trans_inner(
     state: Option<Inner<StatsSummary1D>>,
     val: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<StatsSummary1D>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -184,7 +184,7 @@ pub fn stats1d_trans_inner(
 pub fn stats1d_tf_trans_inner(
     state: Option<Inner<StatsSummary1DTF>>,
     val: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<StatsSummary1DTF>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -214,7 +214,7 @@ pub fn stats2d_trans(
     state: Internal,
     y: Option<f64>,
     x: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     stats2d_trans_inner(unsafe { state.to_inner() }, y, x, fcinfo).internal()
 }
@@ -222,7 +222,7 @@ pub fn stats2d_trans_inner(
     state: Option<Inner<StatsSummary2D>>,
     y: Option<f64>,
     x: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<StatsSummary2D>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -258,7 +258,7 @@ pub fn stats2d_tf_trans(
     state: Internal,
     y: Option<f64>,
     x: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     stats2d_tf_trans_inner(unsafe { state.to_inner() }, y, x, fcinfo).internal()
 }
@@ -266,7 +266,7 @@ pub fn stats2d_tf_trans_inner(
     state: Option<Inner<StatsSummary2DTF>>,
     y: Option<f64>,
     x: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<StatsSummary2DTF>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -304,14 +304,14 @@ pub fn stats2d_tf_trans_inner(
 pub fn stats1d_inv_trans(
     state: Internal,
     val: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     stats1d_inv_trans_inner(unsafe { state.to_inner() }, val, fcinfo).internal()
 }
 pub fn stats1d_inv_trans_inner(
     state: Option<Inner<StatsSummary1D>>,
     val: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<StatsSummary1D>> {
     unsafe {
         in_aggregate_context(fcinfo, || match (state, val) {
@@ -330,14 +330,14 @@ pub fn stats1d_inv_trans_inner(
 pub fn stats1d_tf_inv_trans(
     state: Internal,
     val: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     stats1d_tf_inv_trans_inner(unsafe { state.to_inner() }, val, fcinfo).internal()
 }
 pub fn stats1d_tf_inv_trans_inner(
     state: Option<Inner<StatsSummary1DTF>>,
     val: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<StatsSummary1DTF>> {
     unsafe {
         in_aggregate_context(fcinfo, || match (state, val) {
@@ -357,7 +357,7 @@ pub fn stats2d_inv_trans(
     state: Internal,
     y: Option<f64>,
     x: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     stats2d_inv_trans_inner(unsafe { state.to_inner() }, y, x, fcinfo).internal()
 }
@@ -365,7 +365,7 @@ pub fn stats2d_inv_trans_inner(
     state: Option<Inner<StatsSummary2D>>,
     y: Option<f64>,
     x: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<StatsSummary2D>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -392,7 +392,7 @@ pub fn stats2d_tf_inv_trans(
     state: Internal,
     y: Option<f64>,
     x: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     stats2d_tf_inv_trans_inner(unsafe { state.to_inner() }, y, x, fcinfo).internal()
 }
@@ -400,7 +400,7 @@ pub fn stats2d_tf_inv_trans_inner(
     state: Option<Inner<StatsSummary2DTF>>,
     y: Option<f64>,
     x: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<StatsSummary2DTF>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -429,14 +429,14 @@ pub fn stats2d_tf_inv_trans_inner(
 pub fn stats1d_summary_trans<'a>(
     state: Internal,
     value: Option<StatsSummary1D<'a>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     stats1d_summary_trans_inner(unsafe { state.to_inner() }, value, fcinfo).internal()
 }
 pub fn stats1d_summary_trans_inner<'s>(
     state: Option<Inner<StatsSummary1D<'s>>>,
     value: Option<StatsSummary1D<'s>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<StatsSummary1D<'s>>> {
     unsafe {
         in_aggregate_context(fcinfo, || match (state, value) {
@@ -457,14 +457,14 @@ pub fn stats1d_summary_trans_inner<'s>(
 pub fn stats2d_summary_trans<'a>(
     state: Internal,
     value: Option<StatsSummary2D<'a>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     stats2d_summary_trans_inner(unsafe { state.to_inner() }, value, fcinfo).internal()
 }
 pub fn stats2d_summary_trans_inner<'s>(
     state: Option<Inner<StatsSummary2D<'s>>>,
     value: Option<StatsSummary2D<'s>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<StatsSummary2D<'s>>> {
     unsafe {
         in_aggregate_context(fcinfo, || match (state, value) {
@@ -485,14 +485,14 @@ pub fn stats2d_summary_trans_inner<'s>(
 pub fn stats1d_summary_inv_trans<'a>(
     state: Internal,
     value: Option<StatsSummary1D<'a>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     stats1d_summary_inv_trans_inner(unsafe { state.to_inner() }, value, fcinfo).internal()
 }
 pub fn stats1d_summary_inv_trans_inner<'s>(
     state: Option<Inner<StatsSummary1D<'s>>>,
     value: Option<StatsSummary1D>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<StatsSummary1D<'s>>> {
     unsafe {
         in_aggregate_context(fcinfo, || match (state, &value) {
@@ -512,14 +512,14 @@ pub fn stats1d_summary_inv_trans_inner<'s>(
 pub fn stats2d_summary_inv_trans<'a>(
     state: Internal,
     value: Option<StatsSummary2D<'a>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     stats2d_summary_inv_trans_inner(unsafe { state.to_inner() }, value, fcinfo).internal()
 }
 pub fn stats2d_summary_inv_trans_inner<'s>(
     state: Option<Inner<StatsSummary2D<'s>>>,
     value: Option<StatsSummary2D>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<StatsSummary2D<'s>>> {
     unsafe {
         in_aggregate_context(fcinfo, || match (state, &value) {
@@ -539,14 +539,14 @@ pub fn stats2d_summary_inv_trans_inner<'s>(
 pub fn stats1d_combine(
     state1: Internal,
     state2: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     unsafe { stats1d_combine_inner(state1.to_inner(), state2.to_inner(), fcinfo).internal() }
 }
 pub fn stats1d_combine_inner<'s, 'v>(
     state1: Option<Inner<StatsSummary1D<'s>>>,
     state2: Option<Inner<StatsSummary1D<'v>>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<StatsSummary1D<'s>>> {
     unsafe {
         in_aggregate_context(fcinfo, || match (state1, state2) {
@@ -573,14 +573,14 @@ pub fn stats1d_combine_inner<'s, 'v>(
 pub fn stats2d_combine(
     state1: Internal,
     state2: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     unsafe { stats2d_combine_inner(state1.to_inner(), state2.to_inner(), fcinfo).internal() }
 }
 pub fn stats2d_combine_inner<'s, 'v>(
     state1: Option<Inner<StatsSummary2D<'s>>>,
     state2: Option<Inner<StatsSummary2D<'v>>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<StatsSummary2D<'s>>> {
     unsafe {
         in_aggregate_context(fcinfo, || match (state1, state2) {
@@ -606,7 +606,7 @@ pub fn stats2d_combine_inner<'s, 'v>(
 #[pg_extern(immutable, parallel_safe)]
 fn stats1d_final<'s>(
     state: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<StatsSummary1D<'s>> {
     unsafe {
         in_aggregate_context(fcinfo, || match state.get() {
@@ -622,7 +622,7 @@ fn stats1d_final<'s>(
 #[pg_extern(immutable, parallel_safe)]
 fn stats1d_tf_final<'s>(
     state: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
     // return a normal stats summary here
 ) -> Option<StatsSummary1D<'s>> {
     unsafe {
@@ -642,7 +642,7 @@ fn stats1d_tf_final<'s>(
 #[pg_extern(immutable, parallel_safe)]
 fn stats2d_final<'s>(
     state: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<StatsSummary2D<'s>> {
     unsafe {
         in_aggregate_context(fcinfo, || match state.get() {
@@ -658,7 +658,7 @@ fn stats2d_final<'s>(
 #[pg_extern(immutable, parallel_safe)]
 fn stats2d_tf_final<'s>(
     state: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<StatsSummary2D<'s>> {
     unsafe {
         in_aggregate_context(fcinfo, || match state.get() {
@@ -1385,7 +1385,7 @@ pub enum Method {
 pub fn method_kind(method: &str) -> Method {
     match as_method(method) {
         Some(method) => method,
-        None => pgx::error!("unknown analysis method. Valid methods are 'population' and 'sample'"),
+        None => pgrx::error!("unknown analysis method. Valid methods are 'population' and 'sample'"),
     }
 }
 
@@ -1402,7 +1402,7 @@ pub fn as_method(method: &str) -> Option<Method> {
 // mod tests {
 
 //     use approx::assert_relative_eq;
-//     use pgx::*;
+//     use pgrx::*;
 //     use super::*;
 
 //     macro_rules! select_one {
@@ -1642,7 +1642,7 @@ mod tests {
 
             let control = state.unwrap();
             let buffer = stats1d_trans_serialize(Inner::from(control.clone()).internal().unwrap());
-            let buffer = pgx::varlena::varlena_to_byte_slice(buffer.0.cast_mut_ptr());
+            let buffer = pgrx::varlena::varlena_to_byte_slice(buffer.0.cast_mut_ptr());
 
             let expected = [
                 1, 1, 1, 5, 0, 0, 0, 0, 0, 0, 0, 144, 194, 245, 40, 92, 143, 73, 64, 100, 180, 142,
@@ -1651,9 +1651,9 @@ mod tests {
             ];
             assert_eq!(buffer, expected);
 
-            let expected = pgx::varlena::rust_byte_slice_to_bytea(&expected);
+            let expected = pgrx::varlena::rust_byte_slice_to_bytea(&expected);
             let new_state =
-                stats1d_trans_deserialize_inner(bytea(pg_sys::Datum::from(expected.as_ptr())));
+                stats1d_trans_deserialize_inner(bytea(pgrx::pg_sys::Datum::from(expected.as_ptr())));
 
             assert_eq!(&*new_state, &*control);
         }
@@ -1734,7 +1734,7 @@ mod tests {
     #[allow(clippy::float_cmp)]
     fn check_agg_equivalence(
         state: &TestState,
-        client: &mut pgx::spi::SpiClient,
+        client: &mut pgrx::spi::SpiClient,
         pg_cmd: &str,
         tk_cmd: &str,
         allowed_diff: f64,

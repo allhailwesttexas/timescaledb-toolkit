@@ -2,12 +2,12 @@
 
 use std::fmt;
 
-use pgx::{
+use pgrx::{
     iter::{SetOfIterator, TableIterator},
     *,
 };
 
-use pg_sys::{Datum, Oid};
+use pgrx::pg_sys::{Datum, Oid};
 
 use serde::{
     de::{SeqAccess, Visitor},
@@ -195,7 +195,7 @@ impl SpaceSavingTransState {
         (1. / min_freq) as u32 + 1
     }
 
-    fn freq_agg_from_type_id(min_freq: f64, typ: pg_sys::Oid, collation: Option<Oid>) -> Self {
+    fn freq_agg_from_type_id(min_freq: f64, typ: pgrx::pg_sys::Oid, collation: Option<Oid>) -> Self {
         SpaceSavingTransState {
             entries: vec![],
             indices: PgAnyElementHashMap::new(typ, collation),
@@ -209,14 +209,14 @@ impl SpaceSavingTransState {
     fn mcv_agg_from_type_id(
         skew: f64,
         nval: u32,
-        typ: pg_sys::Oid,
+        typ: pgrx::pg_sys::Oid,
         collation: Option<Oid>,
     ) -> Self {
         if nval == 0 {
-            pgx::error!("mcv aggregate requires an n value > 0")
+            pgrx::error!("mcv aggregate requires an n value > 0")
         }
         if skew <= 1.0 {
-            pgx::error!("mcv aggregate requires a skew factor > 1.0")
+            pgrx::error!("mcv aggregate requires a skew factor > 1.0")
         }
 
         let prob_eq_n = zeta_eq_n(skew, nval as u64);
@@ -262,7 +262,7 @@ impl SpaceSavingTransState {
         overcounts: &[u64],
     ) {
         assert_eq!(self.total_vals, 0); // This should only be called on an empty aggregate
-        assert_eq!(self.type_oid(), pg_sys::INT8OID);
+        assert_eq!(self.type_oid(), pgrx::pg_sys::INT8OID);
         self.total_vals = val_count;
 
         for (idx, val) in values.iter().enumerate() {
@@ -453,10 +453,10 @@ impl<'input> From<&SpaceSavingTransState> for SpaceSavingAggregate<'input> {
     }
 }
 
-impl<'input> From<(&SpaceSavingAggregate<'input>, &pg_sys::FunctionCallInfo)>
+impl<'input> From<(&SpaceSavingAggregate<'input>, &pgrx::pg_sys::FunctionCallInfo)>
     for SpaceSavingTransState
 {
-    fn from(data_in: (&SpaceSavingAggregate<'input>, &pg_sys::FunctionCallInfo)) -> Self {
+    fn from(data_in: (&SpaceSavingAggregate<'input>, &pgrx::pg_sys::FunctionCallInfo)) -> Self {
         let (agg, fcinfo) = data_in;
         let collation = get_collation_or_default(*fcinfo);
         let mut trans = if agg.topn == 0 {
@@ -500,7 +500,7 @@ pg_type! {
 
 impl<'input> From<&SpaceSavingTransState> for SpaceSavingBigIntAggregate<'input> {
     fn from(trans: &SpaceSavingTransState) -> Self {
-        assert_eq!(trans.type_oid(), pg_sys::INT8OID);
+        assert_eq!(trans.type_oid(), pgrx::pg_sys::INT8OID);
 
         let mut values = Vec::new();
         let mut counts = Vec::new();
@@ -529,24 +529,24 @@ impl<'input> From<&SpaceSavingTransState> for SpaceSavingBigIntAggregate<'input>
 impl<'input>
     From<(
         &SpaceSavingBigIntAggregate<'input>,
-        &pg_sys::FunctionCallInfo,
+        &pgrx::pg_sys::FunctionCallInfo,
     )> for SpaceSavingTransState
 {
     fn from(
         data_in: (
             &SpaceSavingBigIntAggregate<'input>,
-            &pg_sys::FunctionCallInfo,
+            &pgrx::pg_sys::FunctionCallInfo,
         ),
     ) -> Self {
         let (agg, fcinfo) = data_in;
         let collation = get_collation_or_default(*fcinfo);
         let mut trans = if agg.topn == 0 {
-            SpaceSavingTransState::freq_agg_from_type_id(agg.freq_param, pg_sys::INT8OID, collation)
+            SpaceSavingTransState::freq_agg_from_type_id(agg.freq_param, pgrx::pg_sys::INT8OID, collation)
         } else {
             SpaceSavingTransState::mcv_agg_from_type_id(
                 agg.freq_param,
                 agg.topn as u32,
-                pg_sys::INT8OID,
+                pgrx::pg_sys::INT8OID,
                 collation,
             )
         };
@@ -577,7 +577,7 @@ pg_type! {
 
 impl<'input> From<&SpaceSavingTransState> for SpaceSavingTextAggregate<'input> {
     fn from(trans: &SpaceSavingTransState) -> Self {
-        assert_eq!(trans.type_oid(), pg_sys::TEXTOID);
+        assert_eq!(trans.type_oid(), pgrx::pg_sys::TEXTOID);
 
         let mut values = Vec::new();
         let mut counts = Vec::new();
@@ -603,19 +603,19 @@ impl<'input> From<&SpaceSavingTransState> for SpaceSavingTextAggregate<'input> {
     }
 }
 
-impl<'input> From<(&SpaceSavingTextAggregate<'input>, &pg_sys::FunctionCallInfo)>
+impl<'input> From<(&SpaceSavingTextAggregate<'input>, &pgrx::pg_sys::FunctionCallInfo)>
     for SpaceSavingTransState
 {
-    fn from(data_in: (&SpaceSavingTextAggregate<'input>, &pg_sys::FunctionCallInfo)) -> Self {
+    fn from(data_in: (&SpaceSavingTextAggregate<'input>, &pgrx::pg_sys::FunctionCallInfo)) -> Self {
         let (agg, fcinfo) = data_in;
         let collation = get_collation_or_default(*fcinfo);
         let mut trans = if agg.topn == 0 {
-            SpaceSavingTransState::freq_agg_from_type_id(agg.freq_param, pg_sys::TEXTOID, collation)
+            SpaceSavingTransState::freq_agg_from_type_id(agg.freq_param, pgrx::pg_sys::TEXTOID, collation)
         } else {
             SpaceSavingTransState::mcv_agg_from_type_id(
                 agg.freq_param,
                 agg.topn,
-                pg_sys::TEXTOID,
+                pgrx::pg_sys::TEXTOID,
                 collation,
             )
         };
@@ -636,7 +636,7 @@ pub fn mcv_agg_trans(
     state: Internal,
     n: i32,
     value: Option<AnyElement>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     mcv_agg_with_skew_trans(state, n, DEFAULT_ZETA_SKEW, value, fcinfo)
 }
@@ -646,7 +646,7 @@ pub fn mcv_agg_bigint_trans(
     state: Internal,
     n: i32,
     value: Option<i64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     mcv_agg_with_skew_bigint_trans(state, n, DEFAULT_ZETA_SKEW, value, fcinfo)
 }
@@ -656,7 +656,7 @@ pub fn mcv_agg_text_trans(
     state: Internal,
     n: i32,
     value: Option<crate::raw::text>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     mcv_agg_with_skew_text_trans(state, n, DEFAULT_ZETA_SKEW, value, fcinfo)
 }
@@ -667,7 +667,7 @@ pub fn mcv_agg_with_skew_trans(
     n: i32,
     skew: f64,
     value: Option<AnyElement>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     space_saving_trans(
         unsafe { state.to_inner() },
@@ -686,12 +686,12 @@ pub fn mcv_agg_with_skew_bigint_trans(
     n: i32,
     skew: f64,
     value: Option<i64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     let value = match value {
         None => None,
         Some(val) => unsafe {
-            AnyElement::from_polymorphic_datum(pg_sys::Datum::from(val), false, pg_sys::INT8OID)
+            AnyElement::from_polymorphic_datum(pgrx::pg_sys::Datum::from(val), false, pgrx::pg_sys::INT8OID)
         },
     };
 
@@ -712,13 +712,13 @@ pub fn mcv_agg_with_skew_text_trans(
     n: i32,
     skew: f64,
     value: Option<crate::raw::text>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
-    let txt = value.map(|v| unsafe { pg_sys::pg_detoast_datum_copy(v.0.cast_mut_ptr()) });
+    let txt = value.map(|v| unsafe { pgrx::pg_sys::pg_detoast_datum_copy(v.0.cast_mut_ptr()) });
     let value = match txt {
         None => None,
         Some(val) => unsafe {
-            AnyElement::from_polymorphic_datum(pg_sys::Datum::from(val), false, pg_sys::TEXTOID)
+            AnyElement::from_polymorphic_datum(pgrx::pg_sys::Datum::from(val), false, pgrx::pg_sys::TEXTOID)
         },
     };
 
@@ -738,10 +738,10 @@ pub fn freq_agg_trans(
     state: Internal,
     freq: f64,
     value: Option<AnyElement>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     if freq <= 0. || freq >= 1.0 {
-        pgx::error!("frequency aggregate requires a frequency in the range (0.0, 1.0)")
+        pgrx::error!("frequency aggregate requires a frequency in the range (0.0, 1.0)")
     }
 
     space_saving_trans(
@@ -758,12 +758,12 @@ pub fn freq_agg_bigint_trans(
     state: Internal,
     freq: f64,
     value: Option<i64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     let value = match value {
         None => None,
         Some(val) => unsafe {
-            AnyElement::from_polymorphic_datum(pg_sys::Datum::from(val), false, pg_sys::INT8OID)
+            AnyElement::from_polymorphic_datum(pgrx::pg_sys::Datum::from(val), false, pgrx::pg_sys::INT8OID)
         },
     };
     freq_agg_trans(state, freq, value, fcinfo)
@@ -774,13 +774,13 @@ pub fn freq_agg_text_trans(
     state: Internal,
     freq: f64,
     value: Option<crate::raw::text>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
-    let txt = value.map(|v| unsafe { pg_sys::pg_detoast_datum_copy(v.0.cast_mut_ptr()) });
+    let txt = value.map(|v| unsafe { pgrx::pg_sys::pg_detoast_datum_copy(v.0.cast_mut_ptr()) });
     let value = match txt {
         None => None,
         Some(val) => unsafe {
-            AnyElement::from_polymorphic_datum(pg_sys::Datum::from(val), false, pg_sys::TEXTOID)
+            AnyElement::from_polymorphic_datum(pgrx::pg_sys::Datum::from(val), false, pgrx::pg_sys::TEXTOID)
         },
     };
     freq_agg_trans(state, freq, value, fcinfo)
@@ -789,11 +789,11 @@ pub fn freq_agg_text_trans(
 pub fn space_saving_trans<F>(
     state: Option<Inner<SpaceSavingTransState>>,
     value: Option<AnyElement>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
     make_trans_state: F,
 ) -> Option<Inner<SpaceSavingTransState>>
 where
-    F: FnOnce(pg_sys::Oid, Option<pg_sys::Oid>) -> SpaceSavingTransState,
+    F: FnOnce(pgrx::pg_sys::Oid, Option<pgrx::pg_sys::Oid>) -> SpaceSavingTransState,
 {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -820,7 +820,7 @@ where
 pub fn rollup_agg_trans<'input>(
     state: Internal,
     value: Option<SpaceSavingAggregate<'input>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     let value = match value {
         None => return Some(state),
@@ -832,7 +832,7 @@ pub fn rollup_agg_trans<'input>(
 pub fn rollup_agg_trans_inner(
     state: Option<Inner<SpaceSavingTransState>>,
     value: SpaceSavingAggregate,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<SpaceSavingTransState>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -850,7 +850,7 @@ pub fn rollup_agg_trans_inner(
 pub fn rollup_agg_bigint_trans<'input>(
     state: Internal,
     value: Option<SpaceSavingBigIntAggregate<'input>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     let value = match value {
         None => return Some(state),
@@ -862,7 +862,7 @@ pub fn rollup_agg_bigint_trans<'input>(
 pub fn rollup_agg_bigint_trans_inner(
     state: Option<Inner<SpaceSavingTransState>>,
     value: SpaceSavingBigIntAggregate,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<SpaceSavingTransState>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -880,7 +880,7 @@ pub fn rollup_agg_bigint_trans_inner(
 pub fn rollup_agg_text_trans<'input>(
     state: Internal,
     value: Option<SpaceSavingTextAggregate<'input>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     let value = match value {
         None => return Some(state),
@@ -892,7 +892,7 @@ pub fn rollup_agg_text_trans<'input>(
 pub fn rollup_agg_text_trans_inner(
     state: Option<Inner<SpaceSavingTransState>>,
     value: SpaceSavingTextAggregate,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<SpaceSavingTransState>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -910,14 +910,14 @@ pub fn rollup_agg_text_trans_inner(
 pub fn space_saving_combine(
     state1: Internal,
     state2: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     unsafe { space_saving_combine_inner(state1.to_inner(), state2.to_inner(), fcinfo).internal() }
 }
 pub fn space_saving_combine_inner(
     a: Option<Inner<SpaceSavingTransState>>,
     b: Option<Inner<SpaceSavingTransState>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<SpaceSavingTransState>> {
     unsafe {
         in_aggregate_context(fcinfo, || match (a, b) {
@@ -932,7 +932,7 @@ pub fn space_saving_combine_inner(
 #[pg_extern(immutable, parallel_safe)]
 fn space_saving_final(
     state: Internal,
-    _fcinfo: pg_sys::FunctionCallInfo,
+    _fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<SpaceSavingAggregate<'static>> {
     let state: Option<&SpaceSavingTransState> = unsafe { state.get() };
     state.map(SpaceSavingAggregate::from)
@@ -941,7 +941,7 @@ fn space_saving_final(
 #[pg_extern(immutable, parallel_safe)]
 fn space_saving_bigint_final(
     state: Internal,
-    _fcinfo: pg_sys::FunctionCallInfo,
+    _fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<SpaceSavingBigIntAggregate<'static>> {
     let state: Option<&SpaceSavingTransState> = unsafe { state.get() };
     state.map(SpaceSavingBigIntAggregate::from)
@@ -950,7 +950,7 @@ fn space_saving_bigint_final(
 #[pg_extern(immutable, parallel_safe)]
 fn space_saving_text_final(
     state: Internal,
-    _fcinfo: pg_sys::FunctionCallInfo,
+    _fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<SpaceSavingTextAggregate<'static>> {
     let state: Option<&SpaceSavingTransState> = unsafe { state.get() };
     state.map(SpaceSavingTextAggregate::from)
@@ -1270,7 +1270,7 @@ pub fn freq_iter<'a>(
 > {
     unsafe {
         if ty.oid().as_u32() != agg.type_oid {
-            pgx::error!("mischatched types")
+            pgrx::error!("mischatched types")
         }
         let counts = agg.counts.slice().iter().zip(agg.overcounts.slice().iter());
         TableIterator::new(agg.datums.clone().into_iter().zip(counts).map_while(
@@ -1381,7 +1381,7 @@ fn validate_topn_for_mcv_agg(
 
     // TODO: should we allow this if we have enough data?
     if n > topn as i32 {
-        pgx::error!(
+        pgrx::error!(
             "requested N ({}) exceeds creation parameter of mcv aggregate ({})",
             n,
             topn
@@ -1392,7 +1392,7 @@ fn validate_topn_for_mcv_agg(
     // for our zeta curve.
     let needed_count = (zeta_le_n(skew, n as u64) * total_vals as f64).ceil() as u64;
     if counts.take(n as usize).sum::<u64>() < needed_count {
-        pgx::error!("data is not skewed enough to find top {} parameters with a skew of {}, try reducing the skew factor", n , skew)
+        pgrx::error!("data is not skewed enough to find top {} parameters with a skew of {}, try reducing the skew factor", n , skew)
     }
 }
 
@@ -1404,7 +1404,7 @@ pub fn topn(
 ) -> SetOfIterator<AnyElement> {
     // If called with a NULL, assume type matches
     if ty.is_some() && ty.unwrap().oid().as_u32() != agg.type_oid {
-        pgx::error!("mischatched types")
+        pgrx::error!("mischatched types")
     }
 
     validate_topn_for_mcv_agg(
@@ -1438,7 +1438,7 @@ pub fn default_topn(
     ty: Option<AnyElement>,
 ) -> SetOfIterator<AnyElement> {
     if agg.topn == 0 {
-        pgx::error!("frequency aggregates require a N parameter to topn")
+        pgrx::error!("frequency aggregates require a N parameter to topn")
     }
     let n = agg.topn as i32;
     topn(agg, n, ty)
@@ -1476,7 +1476,7 @@ pub fn arrow_topn_bigint<'a>(
 #[pg_extern(immutable, parallel_safe, name = "topn")]
 pub fn default_topn_bigint(agg: SpaceSavingBigIntAggregate<'_>) -> SetOfIterator<i64> {
     if agg.topn == 0 {
-        pgx::error!("frequency aggregates require a N parameter to topn")
+        pgrx::error!("frequency aggregates require a N parameter to topn")
     }
     let n = agg.topn as i32;
     topn_bigint(agg, n)
@@ -1526,7 +1526,7 @@ pub fn arrow_topn_text<'a>(
 #[pg_extern(immutable, parallel_safe, name = "topn")]
 pub fn default_topn_text(agg: SpaceSavingTextAggregate<'_>) -> SetOfIterator<String> {
     if agg.topn == 0 {
-        pgx::error!("frequency aggregates require a N parameter to topn")
+        pgrx::error!("frequency aggregates require a N parameter to topn")
     }
     let n = agg.topn as i32;
     topn_text(agg, n)
@@ -1608,11 +1608,11 @@ pub fn arrow_min_bigint_frequency<'a>(
 // Still needs an arrow operator defined, but the text datum input is a bit finicky.
 #[pg_extern(immutable, parallel_safe, name = "max_frequency")]
 pub fn max_text_frequency(agg: SpaceSavingTextAggregate<'_>, value: text) -> f64 {
-    let value: PgAnyElement = (value.0, pg_sys::TEXTOID).into();
+    let value: PgAnyElement = (value.0, pgrx::pg_sys::TEXTOID).into();
     match agg
         .datums
         .iter()
-        .position(|datum| value == (datum, pg_sys::TEXTOID).into())
+        .position(|datum| value == (datum, pgrx::pg_sys::TEXTOID).into())
     {
         Some(idx) => agg.counts.slice()[idx] as f64 / agg.values_seen as f64,
         None => 0.,
@@ -1622,11 +1622,11 @@ pub fn max_text_frequency(agg: SpaceSavingTextAggregate<'_>, value: text) -> f64
 // Still needs an arrow operator defined, but the text datum input is a bit finicky.
 #[pg_extern(immutable, parallel_safe, name = "min_frequency")]
 pub fn min_text_frequency(agg: SpaceSavingTextAggregate<'_>, value: text) -> f64 {
-    let value: PgAnyElement = (value.0, pg_sys::TEXTOID).into();
+    let value: PgAnyElement = (value.0, pgrx::pg_sys::TEXTOID).into();
     match agg
         .datums
         .iter()
-        .position(|datum| value == (datum, pg_sys::TEXTOID).into())
+        .position(|datum| value == (datum, pgrx::pg_sys::TEXTOID).into())
     {
         Some(idx) => {
             (agg.counts.slice()[idx] - agg.overcounts.slice()[idx]) as f64 / agg.values_seen as f64
@@ -1682,7 +1682,7 @@ impl<Input, InputIterator: std::iter::Iterator<Item = Input>> Iterator
     }
 }
 
-unsafe fn varlena_to_string(vl: *const pg_sys::varlena) -> String {
+unsafe fn varlena_to_string(vl: *const pgrx::pg_sys::varlena) -> String {
     let bytes: &[u8] = varlena_to_byte_slice(vl);
     let s = std::str::from_utf8(bytes).expect("Error creating string from text data");
     s.into()
@@ -1803,9 +1803,9 @@ mod tests {
             for j in i..=20 {
                 let value = unsafe {
                     AnyElement::from_polymorphic_datum(
-                        pg_sys::Datum::from(j),
+                        pgrx::pg_sys::Datum::from(j),
                         false,
-                        pg_sys::INT4OID,
+                        pgrx::pg_sys::INT4OID,
                     )
                 };
                 state = super::freq_agg_trans(state, freq, value, fcinfo).unwrap();
@@ -1867,9 +1867,9 @@ mod tests {
             for j in i..=20 {
                 let value = unsafe {
                     AnyElement::from_polymorphic_datum(
-                        pg_sys::Datum::from(j),
+                        pgrx::pg_sys::Datum::from(j),
                         false,
-                        pg_sys::INT4OID,
+                        pgrx::pg_sys::INT4OID,
                     )
                 };
                 state = super::freq_agg_trans(state, freq, value, fcinfo).unwrap();
@@ -2007,7 +2007,7 @@ mod tests {
     }
 
     // Setup environment and create table 'test' with some aggregates in table 'aggs'
-    fn setup_with_test_table(client: &mut pgx::spi::SpiClient) {
+    fn setup_with_test_table(client: &mut pgrx::spi::SpiClient) {
         // using the search path trick for this test to make it easier to stabilize later on
         let sp = client
             .update(
@@ -2376,7 +2376,7 @@ mod tests {
         for _ in 0..200 {
             let v = rand100.sample(&mut rng);
             let value = unsafe {
-                AnyElement::from_polymorphic_datum(pg_sys::Datum::from(v), false, pg_sys::INT4OID)
+                AnyElement::from_polymorphic_datum(pgrx::pg_sys::Datum::from(v), false, pgrx::pg_sys::INT4OID)
             };
             state = super::freq_agg_trans(state, freq, value, fcinfo).unwrap();
             counts[v] += 1;
@@ -2414,9 +2414,9 @@ mod tests {
                 let v = rand100.sample(&mut rng);
                 let value = unsafe {
                     AnyElement::from_polymorphic_datum(
-                        pg_sys::Datum::from(v),
+                        pgrx::pg_sys::Datum::from(v),
                         false,
-                        pg_sys::INT4OID,
+                        pgrx::pg_sys::INT4OID,
                     )
                 };
                 state = super::freq_agg_trans(state, freq, value, fcinfo).unwrap();
@@ -2469,7 +2469,7 @@ mod tests {
                 continue; // These tail values can start to add up at low skew values
             }
             let value = unsafe {
-                AnyElement::from_polymorphic_datum(pg_sys::Datum::from(v), false, pg_sys::INT4OID)
+                AnyElement::from_polymorphic_datum(pgrx::pg_sys::Datum::from(v), false, pgrx::pg_sys::INT4OID)
             };
             state = super::mcv_agg_with_skew_trans(state, n as i32, skew, value, fcinfo).unwrap();
             if v < 100 {
@@ -2480,7 +2480,7 @@ mod tests {
 
         let state = space_saving_final(state, fcinfo).unwrap();
         let value =
-            unsafe { AnyElement::from_polymorphic_datum(Datum::from(0), false, pg_sys::INT4OID) };
+            unsafe { AnyElement::from_polymorphic_datum(Datum::from(0), false, pgrx::pg_sys::INT4OID) };
         let t: Vec<AnyElement> = default_topn(state, Some(value.unwrap())).collect();
         let agg_topn: Vec<usize> = t.iter().map(|x| x.datum().value()).collect();
 

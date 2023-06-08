@@ -1,4 +1,4 @@
-use pgx::*;
+use pgrx::*;
 
 use super::*;
 
@@ -187,13 +187,13 @@ where
         //       export both?
         // TODO This is fixed in a newer pgx version, should remove after upgrade
         extern "C" {
-            fn interval_pl(fcinfo: pg_sys::FunctionCallInfo) -> pg_sys::Datum;
-            fn interval_mi(fcinfo: pg_sys::FunctionCallInfo) -> pg_sys::Datum;
-            fn interval_mul(fcinfo: pg_sys::FunctionCallInfo) -> pg_sys::Datum;
-            fn interval_div(fcinfo: pg_sys::FunctionCallInfo) -> pg_sys::Datum;
+            fn interval_pl(fcinfo: pgrx::pg_sys::FunctionCallInfo) -> pgrx::pg_sys::Datum;
+            fn interval_mi(fcinfo: pgrx::pg_sys::FunctionCallInfo) -> pgrx::pg_sys::Datum;
+            fn interval_mul(fcinfo: pgrx::pg_sys::FunctionCallInfo) -> pgrx::pg_sys::Datum;
+            fn interval_div(fcinfo: pgrx::pg_sys::FunctionCallInfo) -> pgrx::pg_sys::Datum;
 
-            fn timestamptz_pl_interval(fcinfo: pg_sys::FunctionCallInfo) -> pg_sys::Datum;
-            fn timestamptz_mi_interval(fcinfo: pg_sys::FunctionCallInfo) -> pg_sys::Datum;
+            fn timestamptz_pl_interval(fcinfo: pgrx::pg_sys::FunctionCallInfo) -> pgrx::pg_sys::Datum;
+            fn timestamptz_mi_interval(fcinfo: pgrx::pg_sys::FunctionCallInfo) -> pgrx::pg_sys::Datum;
         }
 
         macro_rules! float_op {
@@ -209,12 +209,12 @@ where
                 let left = self.exec_expression(left, value, time).interval();
                 let right = self.exec_expression(right, value, time).interval();
 
-                let res: *mut pg_sys::Interval = unsafe {
-                    pg_sys::DirectFunctionCall2Coll(
+                let res: *mut pgrx::pg_sys::Interval = unsafe {
+                    pgrx::pg_sys::DirectFunctionCall2Coll(
                         Some($calc),
-                        pg_sys::InvalidOid,
-                        pg_sys::Datum::from(left),
-                        pg_sys::Datum::from(right),
+                        pgrx::pg_sys::InvalidOid,
+                        pgrx::pg_sys::Datum::from(left),
+                        pgrx::pg_sys::Datum::from(right),
                     )
                     .cast_mut_ptr()
                 };
@@ -228,11 +228,11 @@ where
                 let left = self.exec_expression(left, value, time).interval();
                 let right = self.exec_expression(right, value, time).float();
 
-                let res: *mut pg_sys::Interval = unsafe {
-                    pg_sys::DirectFunctionCall2Coll(
+                let res: *mut pgrx::pg_sys::Interval = unsafe {
+                    pgrx::pg_sys::DirectFunctionCall2Coll(
                         Some($calc),
-                        pg_sys::InvalidOid,
-                        pg_sys::Datum::from(left),
+                        pgrx::pg_sys::InvalidOid,
+                        pgrx::pg_sys::Datum::from(left),
                         right.into_datum().unwrap(),
                     )
                     .value() as _
@@ -248,11 +248,11 @@ where
                 let right = self.exec_expression(right, value, time).interval();
 
                 let res: i64 = unsafe {
-                    pg_sys::DirectFunctionCall2Coll(
+                    pgrx::pg_sys::DirectFunctionCall2Coll(
                         Some($calc),
-                        pg_sys::InvalidOid,
-                        pg_sys::Datum::from(left),
-                        pg_sys::Datum::from(right),
+                        pgrx::pg_sys::InvalidOid,
+                        pgrx::pg_sys::Datum::from(left),
+                        pgrx::pg_sys::Datum::from(right),
                     )
                     .value() as _
                 };

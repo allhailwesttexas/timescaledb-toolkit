@@ -1,4 +1,4 @@
-use pgx::*;
+use pgrx::*;
 
 use flat_serialize_macro::FlatSerializable;
 
@@ -60,7 +60,7 @@ pub fn fillto_pipeline_element<'e>(
     fill_method: String,
 ) -> toolkit_experimental::UnstableTimevectorPipeline<'e> {
     unsafe {
-        let interval = interval.0.cast_mut_ptr::<pg_sys::Interval>() as *const pg_sys::Interval;
+        let interval = interval.0.cast_mut_ptr::<pgrx::pg_sys::Interval>() as *const pgrx::pg_sys::Interval;
         // TODO: store the postgres interval object and use postgres timestamp/interval functions
         let interval =
             ((*interval).month as i64 * 30 + (*interval).day as i64) * 24 * 60 * 60 * 1000000
@@ -141,7 +141,7 @@ pub fn fill_to<'s>(
 #[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]
 mod tests {
-    use pgx::*;
+    use pgrx::*;
     use pgx_macros::pg_test;
 
     #[pg_test]

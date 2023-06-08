@@ -1,5 +1,5 @@
-use pgx::iter::TableIterator;
-use pgx::*;
+use pgrx::iter::TableIterator;
+use pgrx::*;
 
 use crate::{
     accessors::{
@@ -604,7 +604,7 @@ pub fn heartbeat_trans(
     start: TimestampTz,
     length: Interval,
     liveness_duration: Interval,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     heartbeat_trans_inner(
         unsafe { state.to_inner() },
@@ -622,7 +622,7 @@ pub fn heartbeat_trans_inner(
     start: TimestampTz,
     length: Interval,
     liveness_duration: Interval,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<HeartbeatTransState>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -641,13 +641,13 @@ pub fn heartbeat_trans_inner(
 #[pg_extern(immutable, parallel_safe)]
 pub fn heartbeat_final(
     state: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<HeartbeatAgg<'static>> {
     heartbeat_final_inner(unsafe { state.to_inner() }, fcinfo)
 }
 pub fn heartbeat_final_inner(
     state: Option<Inner<HeartbeatTransState>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<HeartbeatAgg<'static>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -681,14 +681,14 @@ pub fn heartbeat_final_inner(
 pub fn heartbeat_rollup_trans(
     state: Internal,
     value: Option<HeartbeatAgg<'static>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     heartbeat_rollup_trans_inner(unsafe { state.to_inner() }, value, fcinfo).internal()
 }
 pub fn heartbeat_rollup_trans_inner(
     state: Option<Inner<HeartbeatTransState>>,
     value: Option<HeartbeatAgg<'static>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<HeartbeatTransState>> {
     unsafe {
         in_aggregate_context(fcinfo, || match (state, value) {

@@ -2,7 +2,7 @@
 
 use crate::pg_sys::timestamptz_to_str;
 use core::str::Utf8Error;
-use pgx::{iter::TableIterator, *};
+use pgrx::{iter::TableIterator, *};
 use std::ffi::CStr;
 use tera::{Context, Tera};
 
@@ -105,7 +105,7 @@ impl<'a> IntoIterator for Timevector_TSTZ_F64<'a> {
     }
 }
 
-pub static TIMEVECTOR_OID: once_cell::sync::Lazy<pg_sys::Oid> =
+pub static TIMEVECTOR_OID: once_cell::sync::Lazy<pgrx::pg_sys::Oid> =
     once_cell::sync::Lazy::new(Timevector_TSTZ_F64::type_oid);
 
 #[pg_extern(immutable, parallel_safe)]
@@ -121,7 +121,7 @@ pub fn unnest<'a>(
 
 /// Util function to convert from *const ::std::os::raw::c_char to String
 /// TimestampTz -> *const c_char -> &CStr -> &str -> String
-pub fn timestamptz_to_string(time: pg_sys::TimestampTz) -> Result<String, Utf8Error> {
+pub fn timestamptz_to_string(time: pgrx::pg_sys::TimestampTz) -> Result<String, Utf8Error> {
     let char_ptr = unsafe { timestamptz_to_str(time) };
     let c_str = unsafe { CStr::from_ptr(char_ptr) };
     c_str.to_str().map(|s| s.to_owned())
@@ -205,7 +205,7 @@ pub fn timevector_tstz_f64_trans(
     state: Internal,
     time: Option<crate::raw::TimestampTz>,
     value: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     unsafe { timevector_trans_inner(state.to_inner(), time, value, fcinfo).internal() }
 }
@@ -214,11 +214,11 @@ pub fn timevector_trans_inner(
     state: Option<Inner<Timevector_TSTZ_F64<'_>>>,
     time: Option<crate::raw::TimestampTz>,
     value: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<Timevector_TSTZ_F64<'_>>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
-            let time: pg_sys::TimestampTz = match time {
+            let time: pgrx::pg_sys::TimestampTz = match time {
                 None => return state,
                 Some(time) => time.into(),
             };
@@ -264,7 +264,7 @@ pub fn timevector_trans_inner(
 pub fn timevector_tstz_f64_compound_trans<'a>(
     state: Internal,
     series: Option<Timevector_TSTZ_F64<'a>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     inner_compound_trans(unsafe { state.to_inner() }, series, fcinfo).internal()
 }
@@ -272,7 +272,7 @@ pub fn timevector_tstz_f64_compound_trans<'a>(
 pub fn inner_compound_trans<'b>(
     state: Option<Inner<Timevector_TSTZ_F64<'static>>>,
     series: Option<Timevector_TSTZ_F64<'b>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<Timevector_TSTZ_F64<'static>>> {
     unsafe {
         in_aggregate_context(fcinfo, || match (state, series) {
@@ -291,7 +291,7 @@ pub fn inner_compound_trans<'b>(
 pub fn timevector_combine(
     state1: Internal,
     state2: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     unsafe { inner_combine(state1.to_inner(), state2.to_inner(), fcinfo).internal() }
 }
@@ -299,7 +299,7 @@ pub fn timevector_combine(
 pub fn inner_combine<'a, 'b>(
     state1: Option<Inner<Timevector_TSTZ_F64<'a>>>,
     state2: Option<Inner<Timevector_TSTZ_F64<'b>>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<Timevector_TSTZ_F64<'static>>> {
     unsafe {
         in_aggregate_context(fcinfo, || match (state1, state2) {
@@ -365,14 +365,14 @@ pub fn combine(
 #[pg_extern(immutable, parallel_safe)]
 pub fn timevector_final(
     state: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Timevector_TSTZ_F64<'static>> {
     unsafe { timevector_final_inner(state.to_inner(), fcinfo) }
 }
 
 pub fn timevector_final_inner<'a>(
     state: Option<Inner<Timevector_TSTZ_F64<'a>>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Timevector_TSTZ_F64<'static>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -523,7 +523,7 @@ pub fn arrow_timevector_asof<'a>(
 #[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]
 mod tests {
-    use pgx::*;
+    use pgrx::*;
     use pgx_macros::pg_test;
 
     #[pg_test]

@@ -10,7 +10,7 @@ mod sort;
 
 use std::convert::TryInto;
 
-use pgx::*;
+use pgrx::*;
 
 use super::*;
 
@@ -169,7 +169,7 @@ pub unsafe fn pipeline_support(input: Internal) -> Internal {
         let new_element = UnstableTimevectorPipeline::from_polymorphic_datum(
             new_element,
             false,
-            pg_sys::Oid::INVALID,
+            pgrx::pg_sys::Oid::INVALID,
         )
         .unwrap();
         arrow_add_unstable_element(old_pipeline, new_element)
@@ -180,17 +180,17 @@ pub unsafe fn pipeline_support(input: Internal) -> Internal {
 
 pub(crate) unsafe fn pipeline_support_helper(
     input: Internal,
-    make_new_pipeline: impl FnOnce(UnstableTimevectorPipeline, pg_sys::Datum) -> pg_sys::Datum,
+    make_new_pipeline: impl FnOnce(UnstableTimevectorPipeline, pgrx::pg_sys::Datum) -> pgrx::pg_sys::Datum,
 ) -> Internal {
     use std::mem::{size_of, MaybeUninit};
 
     let input = input.unwrap().unwrap();
-    let input: *mut pg_sys::Node = input.cast_mut_ptr();
-    if !pgx::is_a(input, pg_sys::NodeTag_T_SupportRequestSimplify) {
+    let input: *mut pgrx::pg_sys::Node = input.cast_mut_ptr();
+    if !pgrx::is_a(input, pgrx::pg_sys::NodeTag_T_SupportRequestSimplify) {
         return no_change();
     }
 
-    let req: *mut pg_sys::SupportRequestSimplify = input.cast();
+    let req: *mut pgrx::pg_sys::SupportRequestSimplify = input.cast();
 
     let final_executor = (*req).fcall;
     let original_args = PgList::from_pg((*final_executor).args);
@@ -198,18 +198,18 @@ pub(crate) unsafe fn pipeline_support_helper(
     let arg1 = original_args.head().unwrap();
     let arg2 = original_args.tail().unwrap();
 
-    let (executor_id, lhs_args) = if is_a(arg1, pg_sys::NodeTag_T_OpExpr) {
-        let old_executor: *mut pg_sys::OpExpr = arg1.cast();
+    let (executor_id, lhs_args) = if is_a(arg1, pgrx::pg_sys::NodeTag_T_OpExpr) {
+        let old_executor: *mut pgrx::pg_sys::OpExpr = arg1.cast();
         ((*old_executor).opfuncid, (*old_executor).args)
-    } else if is_a(arg1, pg_sys::NodeTag_T_FuncExpr) {
-        let old_executor: *mut pg_sys::FuncExpr = arg1.cast();
+    } else if is_a(arg1, pgrx::pg_sys::NodeTag_T_FuncExpr) {
+        let old_executor: *mut pgrx::pg_sys::FuncExpr = arg1.cast();
         ((*old_executor).funcid, (*old_executor).args)
     } else {
         return no_change();
     };
 
     // check old_executor operator fn is 'run_pipeline' above
-    static RUN_PIPELINE_OID: once_cell::sync::OnceCell<pg_sys::Oid> =
+    static RUN_PIPELINE_OID: once_cell::sync::OnceCell<pgrx::pg_sys::Oid> =
         once_cell::sync::OnceCell::new();
     match RUN_PIPELINE_OID.get() {
         Some(oid) => {
@@ -219,15 +219,15 @@ pub(crate) unsafe fn pipeline_support_helper(
         }
         None => {
             let executor_fn = {
-                let mut flinfo: pg_sys::FmgrInfo = MaybeUninit::zeroed().assume_init();
-                pg_sys::fmgr_info(executor_id, &mut flinfo);
+                let mut flinfo: pgrx::pg_sys::FmgrInfo = MaybeUninit::zeroed().assume_init();
+                pgrx::pg_sys::fmgr_info(executor_id, &mut flinfo);
                 flinfo.fn_addr
             };
             // FIXME this cast should not be necessary; pgx is defining the
             //       wrapper functions as
-            //       `unsafe fn(fcinfo: pg_sys::FunctionCallInfo) -> pg_sys::Datum`
+            //       `unsafe fn(fcinfo: pgrx::pg_sys::FunctionCallInfo) -> pgrx::pg_sys::Datum`
             //       instead of
-            //       `unsafe extern "C" fn(fcinfo: pg_sys::FunctionCallInfo) -> pg_sys::Datum`
+            //       `unsafe extern "C" fn(fcinfo: pgrx::pg_sys::FunctionCallInfo) -> pgrx::pg_sys::Datum`
             //       we'll fix this upstream
             let expected_executor = arrow_run_pipeline_wrapper as usize;
             match executor_fn {
@@ -244,45 +244,45 @@ pub(crate) unsafe fn pipeline_support_helper(
     let old_series = lhs_args.head().unwrap();
     let old_const = lhs_args.tail().unwrap();
 
-    if !is_a(old_const, pg_sys::NodeTag_T_Const) {
+    if !is_a(old_const, pgrx::pg_sys::NodeTag_T_Const) {
         return no_change();
     }
 
-    let old_const: *mut pg_sys::Const = old_const.cast();
+    let old_const: *mut pgrx::pg_sys::Const = old_const.cast();
 
-    if !is_a(arg2, pg_sys::NodeTag_T_Const) {
+    if !is_a(arg2, pgrx::pg_sys::NodeTag_T_Const) {
         return no_change();
     }
 
-    let new_element_const: *mut pg_sys::Const = arg2.cast();
+    let new_element_const: *mut pgrx::pg_sys::Const = arg2.cast();
 
     let old_pipeline = UnstableTimevectorPipeline::from_polymorphic_datum(
         (*old_const).constvalue,
         false,
-        pg_sys::Oid::INVALID,
+        pgrx::pg_sys::Oid::INVALID,
     )
     .unwrap();
     let new_pipeline = make_new_pipeline(old_pipeline, (*new_element_const).constvalue);
 
-    let new_const = pg_sys::palloc(size_of::<pg_sys::Const>()).cast();
+    let new_const = pgrx::pg_sys::palloc(size_of::<pgrx::pg_sys::Const>()).cast();
     *new_const = *new_element_const;
     (*new_const).constvalue = new_pipeline;
 
-    let new_executor = pg_sys::palloc(size_of::<pg_sys::FuncExpr>()).cast();
+    let new_executor = pgrx::pg_sys::palloc(size_of::<pgrx::pg_sys::FuncExpr>()).cast();
     *new_executor = *final_executor;
     let mut new_executor_args = PgList::new();
     new_executor_args.push(old_series);
     new_executor_args.push(new_const.cast());
     (*new_executor).args = new_executor_args.into_pg();
 
-    Internal::from(Some(pg_sys::Datum::from(new_executor)))
+    Internal::from(Some(pgrx::pg_sys::Datum::from(new_executor)))
 }
 
 // support functions are spec'd as returning NULL pointer if no simplification
 // can be made
-fn no_change() -> pgx::Internal {
-    Internal::from(Some(pg_sys::Datum::from(
-        std::ptr::null_mut::<pg_sys::Expr>(),
+fn no_change() -> pgrx::Internal {
+    Internal::from(Some(pgrx::pg_sys::Datum::from(
+        std::ptr::null_mut::<pgrx::pg_sys::Expr>(),
     )))
 }
 
@@ -317,7 +317,7 @@ pub fn lttb_pipeline_element(
 #[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]
 mod tests {
-    use pgx::*;
+    use pgrx::*;
     use pgx_macros::pg_test;
 
     #[pg_test]

@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use pgx::{
+use pgrx::{
     iter::{SetOfIterator, TableIterator},
     *,
 };
@@ -129,7 +129,7 @@ pub fn interval_lambda<'a>(
         panic!("invalid return type, must return a INTERVAL")
     }
     let mut executor = ExpressionExecutor::new(&expression);
-    pg_sys::Datum::from(executor.exec(value, time.into()).interval()).into()
+    pgrx::pg_sys::Datum::from(executor.exec(value, time.into()).interval()).into()
 }
 
 #[pg_extern(stable, parallel_safe, schema = "toolkit_experimental")]
@@ -191,7 +191,7 @@ pub enum ExpressionSegment {
     TimeVar,
     DoubleConstant(f64),
     TimeConstant(i64),
-    IntervalConstant(*mut pg_sys::Interval),
+    IntervalConstant(*mut pgrx::pg_sys::Interval),
     UserVar(usize, Type),
     Unary(UnaryOp, Box<Self>, Type),
     Binary(BinOp, Box<Self>, Box<Self>, Type),
@@ -267,7 +267,7 @@ pub enum Value {
     Bool(bool),
     Double(f64),
     Time(i64),
-    Interval(*mut pg_sys::Interval),
+    Interval(*mut pgrx::pg_sys::Interval),
     Tuple(Vec<Self>),
 }
 
@@ -347,7 +347,7 @@ impl Value {
         }
     }
 
-    pub(crate) fn interval(&self) -> *mut pg_sys::Interval {
+    pub(crate) fn interval(&self) -> *mut pgrx::pg_sys::Interval {
         match self {
             Value::Interval(i) => *i,
             _ => unreachable!(),
@@ -361,7 +361,7 @@ impl PartialOrd for Value {
         use Value::*;
 
         extern "C" {
-            fn interval_cmp(fcinfo: pg_sys::FunctionCallInfo) -> pg_sys::Datum;
+            fn interval_cmp(fcinfo: pgrx::pg_sys::FunctionCallInfo) -> pgrx::pg_sys::Datum;
         }
 
         if discriminant(self) != discriminant(other) {
@@ -373,11 +373,11 @@ impl PartialOrd for Value {
             (Time(l0), Time(r0)) => l0.partial_cmp(r0),
             (Tuple(l0), Tuple(r0)) => l0.partial_cmp(r0),
             (Interval(l0), Interval(r0)) => unsafe {
-                let res = pg_sys::DirectFunctionCall2Coll(
+                let res = pgrx::pg_sys::DirectFunctionCall2Coll(
                     Some(interval_cmp),
-                    pg_sys::InvalidOid,
-                    pg_sys::Datum::from(*l0),
-                    pg_sys::Datum::from(*r0),
+                    pgrx::pg_sys::InvalidOid,
+                    pgrx::pg_sys::Datum::from(*l0),
+                    pgrx::pg_sys::Datum::from(*r0),
                 )
                 .value() as i32;
                 res.cmp(&0).into()
@@ -392,7 +392,7 @@ impl PartialEq for Value {
         use std::mem::discriminant;
         use Value::*;
         extern "C" {
-            fn interval_eq(fcinfo: pg_sys::FunctionCallInfo) -> pg_sys::Datum;
+            fn interval_eq(fcinfo: pgrx::pg_sys::FunctionCallInfo) -> pgrx::pg_sys::Datum;
         }
 
         if discriminant(self) != discriminant(other) {
@@ -404,11 +404,11 @@ impl PartialEq for Value {
             (Time(l0), Time(r0)) => l0 == r0,
             (Tuple(l0), Tuple(r0)) => l0 == r0,
             (Interval(l0), Interval(r0)) => unsafe {
-                let res = pg_sys::DirectFunctionCall2Coll(
+                let res = pgrx::pg_sys::DirectFunctionCall2Coll(
                     Some(interval_eq),
-                    pg_sys::InvalidOid,
-                    pg_sys::Datum::from(*l0),
-                    pg_sys::Datum::from(*r0),
+                    pgrx::pg_sys::InvalidOid,
+                    pgrx::pg_sys::Datum::from(*l0),
+                    pgrx::pg_sys::Datum::from(*r0),
                 );
                 res.value() != 0
             },
@@ -438,7 +438,7 @@ impl<'a> Lambda<'a> {
 #[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]
 mod tests {
-    use pgx::*;
+    use pgrx::*;
     use pgx_macros::pg_test;
 
     macro_rules! trace_lambda {

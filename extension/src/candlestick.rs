@@ -1,4 +1,4 @@
-use pgx::*;
+use pgrx::*;
 use serde::{Deserialize, Serialize};
 
 use crate::accessors::{
@@ -210,7 +210,7 @@ pub fn tick_data_no_vol_transition(
     state: Internal,
     ts: Option<crate::raw::TimestampTz>,
     price: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     tick_data_transition_inner(unsafe { state.to_inner() }, ts, price, None, fcinfo).internal()
 }
@@ -221,7 +221,7 @@ pub fn tick_data_transition(
     ts: Option<crate::raw::TimestampTz>,
     price: Option<f64>,
     volume: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     tick_data_transition_inner(unsafe { state.to_inner() }, ts, price, volume, fcinfo).internal()
 }
@@ -231,7 +231,7 @@ pub fn tick_data_transition_inner(
     ts: Option<crate::raw::TimestampTz>,
     price: Option<f64>,
     volume: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<Candlestick>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -257,7 +257,7 @@ pub fn tick_data_transition_inner(
 pub fn candlestick_rollup_trans<'a>(
     state: Internal,
     value: Option<Candlestick<'a>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     candlestick_rollup_trans_inner(unsafe { state.to_inner() }, value, fcinfo).internal()
 }
@@ -265,7 +265,7 @@ pub fn candlestick_rollup_trans<'a>(
 pub fn candlestick_rollup_trans_inner<'input>(
     state: Option<Inner<Candlestick<'input>>>,
     value: Option<Candlestick<'input>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<Candlestick<'input>>> {
     unsafe {
         in_aggregate_context(fcinfo, || match (state, value) {
@@ -283,14 +283,14 @@ pub fn candlestick_rollup_trans_inner<'input>(
 #[pg_extern(immutable, parallel_safe)]
 pub fn candlestick_final(
     state: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Candlestick<'static>> {
     unsafe { candlestick_final_inner(state.to_inner(), fcinfo) }
 }
 
 pub fn candlestick_final_inner(
     state: Option<Inner<Candlestick<'static>>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Candlestick<'static>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -307,7 +307,7 @@ pub fn candlestick_final_inner(
 pub fn candlestick_combine(
     state1: Internal,
     state2: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     unsafe { candlestick_combine_inner(state1.to_inner(), state2.to_inner(), fcinfo).internal() }
 }
@@ -315,7 +315,7 @@ pub fn candlestick_combine(
 pub fn candlestick_combine_inner<'input>(
     state1: Option<Inner<Candlestick<'input>>>,
     state2: Option<Inner<Candlestick<'input>>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<Candlestick<'input>>> {
     unsafe {
         in_aggregate_context(fcinfo, || match (state1, state2) {

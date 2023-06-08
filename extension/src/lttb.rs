@@ -1,4 +1,4 @@
-use pgx::*;
+use pgrx::*;
 use std::borrow::Cow;
 
 use crate::{
@@ -24,7 +24,7 @@ pub fn lttb_trans(
     time: crate::raw::TimestampTz,
     val: Option<f64>,
     resolution: i32,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     lttb_trans_inner(unsafe { state.to_inner() }, time, val, resolution, fcinfo).internal()
 }
@@ -33,7 +33,7 @@ pub fn lttb_trans_inner(
     time: crate::raw::TimestampTz,
     val: Option<f64>,
     resolution: i32,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<LttbTrans>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -68,13 +68,13 @@ pub fn lttb_trans_inner(
 #[pg_extern(immutable, parallel_safe)]
 pub fn lttb_final(
     state: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Timevector_TSTZ_F64<'static>> {
     lttb_final_inner(unsafe { state.to_inner() }, fcinfo)
 }
 pub fn lttb_final_inner(
     state: Option<Inner<LttbTrans>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Timevector_TSTZ_F64<'static>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -103,7 +103,7 @@ pub fn gp_lttb_trans(
     val: Option<f64>,
     gap: crate::raw::Interval,
     resolution: i32,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     let state = unsafe { state.to_inner() };
     let needs_interval = state.is_none();
@@ -128,13 +128,13 @@ pub fn gp_lttb_trans(
 #[pg_extern(immutable, parallel_safe, schema = "toolkit_experimental")]
 pub fn gp_lttb_final(
     state: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Timevector_TSTZ_F64<'static>> {
     gap_preserving_lttb_final_inner(unsafe { state.to_inner() }, fcinfo)
 }
 pub fn gap_preserving_lttb_final_inner(
     state: Option<Inner<LttbTrans>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Timevector_TSTZ_F64<'static>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -430,7 +430,7 @@ pub fn lttb_ts(data: Timevector_TSTZ_F64, threshold: usize) -> Timevector_TSTZ_F
 #[cfg(any(test, feature = "pg_test"))]
 #[pg_schema]
 mod tests {
-    use pgx::*;
+    use pgrx::*;
     use pgx_macros::pg_test;
 
     #[pg_test]

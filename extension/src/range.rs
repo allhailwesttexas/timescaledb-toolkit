@@ -1,5 +1,5 @@
 use counter_agg::range::I64Range;
-use pgx::{extension_sql, pg_sys};
+use pgrx::{extension_sql, pg_sys};
 use serde::{Deserialize, Serialize};
 use std::convert::TryInto;
 use std::slice;
@@ -7,7 +7,7 @@ use std::slice;
 use flat_serialize_macro::flat_serialize;
 
 #[allow(non_camel_case_types)]
-pub type tstzrange = *mut pg_sys::varlena;
+pub type tstzrange = *mut pgrx::pg_sys::varlena;
 
 // Derived from Postgres' range_deserialize: https://github.com/postgres/postgres/blob/27e1f14563cf982f1f4d71e21ef247866662a052/src/backend/utils/adt/rangetypes.c#L1779
 // but we modify because we only allow specific types of ranges, namely [) inclusive on left and exclusive on right, as this makes a lot of logic simpler, and allows for a standard way to represent a range.
@@ -43,12 +43,12 @@ pub unsafe fn get_range(range: tstzrange) -> Option<I64Range> {
     Some(range)
 }
 
-unsafe fn get_toasted_bytes(ptr: &pg_sys::varlena) -> &[u8] {
-    let mut ptr = pg_sys::pg_detoast_datum_packed(ptr as *const _ as *mut _);
-    if pgx::varatt_is_1b(ptr) {
-        ptr = pg_sys::pg_detoast_datum_copy(ptr as *const _ as *mut _);
+unsafe fn get_toasted_bytes(ptr: &pgrx::pg_sys::varlena) -> &[u8] {
+    let mut ptr = pgrx::pg_sys::pg_detoast_datum_packed(ptr as *const _ as *mut _);
+    if pgrx::varatt_is_1b(ptr) {
+        ptr = pgrx::pg_sys::pg_detoast_datum_copy(ptr as *const _ as *mut _);
     }
-    let data_len = pgx::varsize_any(ptr);
+    let data_len = pgrx::varsize_any(ptr);
     slice::from_raw_parts(ptr as *mut u8, data_len)
 }
 

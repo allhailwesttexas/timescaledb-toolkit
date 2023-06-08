@@ -1,4 +1,4 @@
-use pgx::*;
+use pgrx::*;
 
 use encodings::{delta, prefix_varint};
 
@@ -23,7 +23,7 @@ pub fn uddsketch_trans(
     size: i32,
     max_error: f64,
     value: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     uddsketch_trans_inner(unsafe { state.to_inner() }, size, max_error, value, fcinfo).internal()
 }
@@ -33,7 +33,7 @@ pub fn uddsketch_trans_inner(
     size: i32,
     max_error: f64,
     value: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<UddSketchInternal>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -60,7 +60,7 @@ const PERCENTILE_AGG_DEFAULT_ERROR: f64 = 0.001;
 pub fn percentile_agg_trans(
     state: Internal,
     value: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     percentile_agg_trans_inner(unsafe { state.to_inner() }, value, fcinfo).internal()
 }
@@ -68,7 +68,7 @@ pub fn percentile_agg_trans(
 pub fn percentile_agg_trans_inner(
     state: Option<Inner<UddSketchInternal>>,
     value: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<UddSketchInternal>> {
     let default_size = PERCENTILE_AGG_DEFAULT_SIZE;
     let default_max_error = PERCENTILE_AGG_DEFAULT_ERROR;
@@ -79,14 +79,14 @@ pub fn percentile_agg_trans_inner(
 pub fn uddsketch_combine(
     state1: Internal,
     state2: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     unsafe { uddsketch_combine_inner(state1.to_inner(), state2.to_inner(), fcinfo).internal() }
 }
 pub fn uddsketch_combine_inner(
     state1: Option<Inner<UddSketchInternal>>,
     state2: Option<Inner<UddSketchInternal>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<UddSketchInternal>> {
     unsafe {
         in_aggregate_context(fcinfo, || match (state1, state2) {
@@ -366,13 +366,13 @@ impl<'input> FromIterator<f64> for UddSketch<'input> {
 #[pg_extern(immutable, parallel_safe)]
 fn uddsketch_final(
     state: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<UddSketch<'static>> {
     unsafe { uddsketch_final_inner(state.to_inner(), fcinfo) }
 }
 fn uddsketch_final_inner(
     state: Option<Inner<UddSketchInternal>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<UddSketch<'static>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -509,14 +509,14 @@ extension_sql!(
 pub fn uddsketch_compound_trans<'a>(
     state: Internal,
     value: Option<UddSketch<'a>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     unsafe { uddsketch_compound_trans_inner(state.to_inner(), value, fcinfo).internal() }
 }
 pub fn uddsketch_compound_trans_inner(
     state: Option<Inner<UddSketchInternal>>,
     value: Option<UddSketch>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<UddSketchInternal>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -1269,7 +1269,7 @@ mod tests {
 
             let control = state.unwrap();
             let buffer = uddsketch_serialize(Inner::from(control.clone()).internal().unwrap());
-            let buffer = pgx::varlena::varlena_to_byte_slice(buffer.0.cast_mut_ptr());
+            let buffer = pgrx::varlena::varlena_to_byte_slice(buffer.0.cast_mut_ptr());
 
             let expected = [
                 1, 1, 123, 20, 174, 71, 225, 122, 116, 63, 100, 0, 0, 0, 5, 0, 0, 0, 0, 0, 0, 0, 5,
@@ -1279,9 +1279,9 @@ mod tests {
             ];
             assert_eq!(buffer, expected);
 
-            let expected = pgx::varlena::rust_byte_slice_to_bytea(&expected);
+            let expected = pgrx::varlena::rust_byte_slice_to_bytea(&expected);
             let new_state =
-                uddsketch_deserialize_inner(bytea(pg_sys::Datum::from(expected.as_ptr())));
+                uddsketch_deserialize_inner(bytea(pgrx::pg_sys::Datum::from(expected.as_ptr())));
             assert_eq!(&*new_state, &*control);
         }
     }

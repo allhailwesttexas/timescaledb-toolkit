@@ -9,8 +9,8 @@ use flat_serialize::{impl_flat_serializable, FlatSerializable, WrapErr};
 
 use serde::{Deserialize, Serialize};
 
-use pg_sys::{Datum, Oid};
-use pgx::*;
+use pgrx::pg_sys::{Datum, Oid};
+use pgrx::*;
 
 /// `PgProcId` provides provides the ability to serialize and deserialize
 /// regprocedures as `namespace.name(args)`
@@ -23,7 +23,7 @@ impl_flat_serializable!(PgProcId);
 // FIXME upstream to pgx
 // TODO use this or regprocedureout()?
 extern "C" {
-    pub fn format_procedure_qualified(procedure_oid: pg_sys::Oid) -> *const c_char;
+    pub fn format_procedure_qualified(procedure_oid: pgrx::pg_sys::Oid) -> *const c_char;
 }
 
 impl Serialize for PgProcId {
@@ -35,7 +35,7 @@ impl Serialize for PgProcId {
             let qualified_name = format_procedure_qualified(self.0);
             let len = CStr::from_ptr(qualified_name).to_bytes().len();
             let qualified_name =
-                pg_sys::pg_server_to_any(qualified_name, len as _, pg_sys::pg_enc_PG_UTF8 as _);
+                pgrx::pg_sys::pg_server_to_any(qualified_name, len as _, pgrx::pg_sys::pg_enc_PG_UTF8 as _);
             let qualified_name = CStr::from_ptr(qualified_name);
             let qualified_name = qualified_name.to_str().unwrap();
             qualified_name.serialize(serializer)
@@ -52,15 +52,15 @@ impl<'de> Deserialize<'de> for PgProcId {
         //       uncallable with DirectFunctionCall(). Is there a way to
         //       export both?
         extern "C" {
-            fn regprocedurein(fcinfo: pg_sys::FunctionCallInfo) -> Datum;
+            fn regprocedurein(fcinfo: pgrx::pg_sys::FunctionCallInfo) -> Datum;
         }
         let qualified_name = <&str>::deserialize(deserializer)?;
         let qualified_name = CString::new(qualified_name).unwrap();
         let oid = unsafe {
-            pg_sys::DirectFunctionCall1Coll(
+            pgrx::pg_sys::DirectFunctionCall1Coll(
                 Some(regprocedurein),
-                pg_sys::InvalidOid,
-                pg_sys::Datum::from(qualified_name.as_ptr()),
+                pgrx::pg_sys::InvalidOid,
+                pgrx::pg_sys::Datum::from(qualified_name.as_ptr()),
             )
         };
 

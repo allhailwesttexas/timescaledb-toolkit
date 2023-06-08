@@ -1,4 +1,4 @@
-use pgx::{iter::TableIterator, *};
+use pgrx::{iter::TableIterator, *};
 
 use crate::nmost::max_float::*;
 use crate::nmost::*;
@@ -50,7 +50,7 @@ pub fn max_n_by_float_trans(
     value: f64,
     data: AnyElement,
     capacity: i64,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     nmost_by_trans_function(
         unsafe { state.to_inner::<MaxByFloatTransType>() },
@@ -66,7 +66,7 @@ pub fn max_n_by_float_trans(
 pub fn max_n_by_float_rollup_trans(
     state: Internal,
     value: MaxByFloats<'static>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     let values: Vec<Reverse<NotNan<f64>>> = value
         .values

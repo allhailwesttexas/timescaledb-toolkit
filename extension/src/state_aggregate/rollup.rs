@@ -280,7 +280,7 @@ impl RollupTransState {
 pub fn compact_state_agg_rollup_trans<'a>(
     state: Internal,
     next: Option<CompactStateAgg<'a>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     compact_state_agg_rollup_trans_inner(unsafe { state.to_inner() }, next, fcinfo).internal()
 }
@@ -288,7 +288,7 @@ pub fn compact_state_agg_rollup_trans<'a>(
 pub fn compact_state_agg_rollup_trans_inner<'a>(
     state: Option<Inner<RollupTransState>>,
     next: Option<CompactStateAgg<'a>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<RollupTransState>> {
     unsafe {
         in_aggregate_context(fcinfo, || match (state, next) {
@@ -313,7 +313,7 @@ pub fn compact_state_agg_rollup_trans_inner<'a>(
 pub fn state_agg_rollup_trans<'a>(
     state: Internal,
     next: Option<StateAgg<'a>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     compact_state_agg_rollup_trans_inner(
         unsafe { state.to_inner() },
@@ -326,14 +326,14 @@ pub fn state_agg_rollup_trans<'a>(
 #[pg_extern(immutable, parallel_safe, schema = "toolkit_experimental")]
 fn compact_state_agg_rollup_final<'a>(
     state: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<CompactStateAgg<'a>> {
     compact_state_agg_rollup_final_inner(unsafe { state.to_inner() }, fcinfo)
 }
 
 fn compact_state_agg_rollup_final_inner<'a>(
     state: Option<Inner<RollupTransState>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<CompactStateAgg<'a>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -352,14 +352,14 @@ fn compact_state_agg_rollup_final_inner<'a>(
 #[pg_extern(immutable, parallel_safe)]
 fn state_agg_rollup_final<'a>(
     state: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<StateAgg<'a>> {
     state_agg_rollup_final_inner(unsafe { state.to_inner() }, fcinfo)
 }
 
 fn state_agg_rollup_final_inner<'a>(
     state: Option<Inner<RollupTransState>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<StateAgg<'a>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -395,7 +395,7 @@ pub fn state_agg_rollup_deserialize_inner(bytes: bytea) -> Inner<RollupTransStat
 pub fn state_agg_rollup_combine(
     state1: Internal,
     state2: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     unsafe {
         state_agg_rollup_combine_inner(state1.to_inner(), state2.to_inner(), fcinfo).internal()
@@ -406,7 +406,7 @@ pub fn state_agg_rollup_combine(
 pub fn state_agg_rollup_combine_inner(
     state1: Option<Inner<RollupTransState>>,
     state2: Option<Inner<RollupTransState>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<RollupTransState>> {
     unsafe {
         in_aggregate_context(fcinfo, || match (state1, state2) {

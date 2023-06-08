@@ -1,6 +1,6 @@
 #![allow(non_camel_case_types)]
 
-use pgx::*;
+use pgrx::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -177,7 +177,7 @@ pub fn time_weight_trans(
     method: String,
     ts: Option<crate::raw::TimestampTz>,
     val: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     unsafe { time_weight_trans_inner(state.to_inner(), method, ts, val, fcinfo).internal() }
 }
@@ -187,7 +187,7 @@ pub fn time_weight_trans_inner(
     method: String,
     ts: Option<crate::raw::TimestampTz>,
     val: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<TimeWeightTransState>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -225,7 +225,7 @@ pub fn time_weight_trans_inner(
 pub fn time_weight_summary_trans<'a>(
     state: Internal,
     next: Option<TimeWeightSummary<'a>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     time_weight_summary_trans_inner(unsafe { state.to_inner() }, next, fcinfo).internal()
 }
@@ -233,7 +233,7 @@ pub fn time_weight_summary_trans<'a>(
 pub fn time_weight_summary_trans_inner(
     state: Option<Inner<TimeWeightTransState>>,
     next: Option<TimeWeightSummary>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<TimeWeightTransState>> {
     unsafe {
         in_aggregate_context(fcinfo, || match (state, next) {
@@ -264,7 +264,7 @@ pub fn time_weight_summary_trans_inner(
 pub fn time_weight_combine(
     state1: Internal,
     state2: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     unsafe { time_weight_combine_inner(state1.to_inner(), state2.to_inner(), fcinfo).internal() }
 }
@@ -272,7 +272,7 @@ pub fn time_weight_combine(
 pub fn time_weight_combine_inner(
     state1: Option<Inner<TimeWeightTransState>>,
     state2: Option<Inner<TimeWeightTransState>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<TimeWeightTransState>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -304,14 +304,14 @@ pub fn time_weight_combine_inner(
 #[pg_extern(immutable, parallel_safe)]
 fn time_weight_final(
     state: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<TimeWeightSummary<'static>> {
     time_weight_final_inner(unsafe { state.to_inner() }, fcinfo)
 }
 
 fn time_weight_final_inner(
     state: Option<Inner<TimeWeightTransState>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<TimeWeightSummary<'static>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -470,7 +470,7 @@ pub fn time_weighted_average_integral<'a>(
 ) -> Option<f64> {
     let unit = match DurationUnit::from_str(&unit) {
         Some(unit) => unit,
-        None => pgx::error!(
+        None => pgrx::error!(
             "Unrecognized duration unit: {}. Valid units are: usecond, msecond, second, minute, hour",
             unit,
         ),
@@ -850,7 +850,7 @@ mod tests {
             let mut control = state.unwrap();
             let buffer =
                 time_weight_trans_serialize(Inner::from(control.clone()).internal().unwrap());
-            let buffer = pgx::varlena::varlena_to_byte_slice(buffer.0.cast_mut_ptr());
+            let buffer = pgrx::varlena::varlena_to_byte_slice(buffer.0.cast_mut_ptr());
 
             let expected = [
                 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 96, 194, 134, 7, 62, 2, 0,
@@ -859,9 +859,9 @@ mod tests {
             ];
             assert_eq!(buffer, expected);
 
-            let expected = pgx::varlena::rust_byte_slice_to_bytea(&expected);
+            let expected = pgrx::varlena::rust_byte_slice_to_bytea(&expected);
             let new_state =
-                time_weight_trans_deserialize_inner(bytea(pg_sys::Datum::from(expected.as_ptr())));
+                time_weight_trans_deserialize_inner(bytea(pgrx::pg_sys::Datum::from(expected.as_ptr())));
 
             control.combine_summaries(); // Serialized form is always combined
             assert_eq!(&*new_state, &*control);

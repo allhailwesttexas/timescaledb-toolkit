@@ -1,4 +1,4 @@
-use pgx::*;
+use pgrx::*;
 
 use serde::{Deserialize, Serialize};
 
@@ -76,7 +76,7 @@ fn nmost_trans_function<T: Ord>(
     state: Option<Inner<NMostTransState<T>>>,
     val: T,
     capacity: usize,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<NMostTransState<T>>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -95,7 +95,7 @@ fn nmost_rollup_trans_function<T: Ord + Copy>(
     state: Option<Inner<NMostTransState<T>>>,
     sorted_vals: &[T],
     capacity: usize,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<NMostTransState<T>>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -140,12 +140,12 @@ fn nmost_trans_combine<T: Clone + Ord + Copy>(
 #[derive(Clone, Debug)]
 pub struct NMostByTransState<T: Ord> {
     values: NMostTransState<(T, usize)>,
-    data: Vec<pg_sys::Datum>,
-    oid: pg_sys::Oid,
+    data: Vec<pgrx::pg_sys::Datum>,
+    oid: pgrx::pg_sys::Oid,
 }
 
 impl<T: Clone + Ord> NMostByTransState<T> {
-    fn new(capacity: usize, first_val: T, first_element: pgx::AnyElement) -> NMostByTransState<T> {
+    fn new(capacity: usize, first_val: T, first_element: pgrx::AnyElement) -> NMostByTransState<T> {
         // first entry will always have index 0
         let first_val = (first_val, 0);
         NMostByTransState {
@@ -155,7 +155,7 @@ impl<T: Clone + Ord> NMostByTransState<T> {
         }
     }
 
-    fn new_entry(&mut self, new_val: T, new_element: pgx::AnyElement) {
+    fn new_entry(&mut self, new_val: T, new_element: pgrx::AnyElement) {
         assert!(new_element.oid() == self.oid);
         if self.data.len() < self.values.capacity {
             // Not yet full, easy case
@@ -216,9 +216,9 @@ impl<T: Ord + Copy> From<(&[T], &DatumStore<'_>, usize)> for NMostByTransState<T
 fn nmost_by_trans_function<T: Ord + Clone>(
     state: Option<Inner<NMostByTransState<T>>>,
     val: T,
-    data: pgx::AnyElement,
+    data: pgrx::AnyElement,
     capacity: usize,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<NMostByTransState<T>>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -238,7 +238,7 @@ fn nmost_by_rollup_trans_function<T: Ord + Copy>(
     sorted_vals: &[T],
     datum_store: &DatumStore,
     capacity: usize,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<NMostByTransState<T>>> {
     unsafe {
         in_aggregate_context(fcinfo, || {

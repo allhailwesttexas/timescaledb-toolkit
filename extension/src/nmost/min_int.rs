@@ -1,4 +1,4 @@
-use pgx::{iter::SetOfIterator, *};
+use pgrx::{iter::SetOfIterator, *};
 
 use crate::nmost::*;
 
@@ -41,7 +41,7 @@ pub fn min_n_int_trans(
     state: Internal,
     value: i64,
     capacity: i64,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     nmost_trans_function(
         unsafe { state.to_inner::<MinIntTransType>() },
@@ -56,7 +56,7 @@ pub fn min_n_int_trans(
 pub fn min_n_int_rollup_trans(
     state: Internal,
     value: MinInts<'static>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     nmost_rollup_trans_function(
         unsafe { state.to_inner::<MinIntTransType>() },

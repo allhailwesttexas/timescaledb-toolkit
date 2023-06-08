@@ -1,4 +1,4 @@
-use pgx::{iter::SetOfIterator, *};
+use pgrx::{iter::SetOfIterator, *};
 
 use crate::nmost::*;
 
@@ -48,7 +48,7 @@ pub fn max_n_int_trans(
     state: Internal,
     value: i64,
     capacity: i64,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     nmost_trans_function(
         unsafe { state.to_inner::<MaxIntTransType>() },
@@ -63,7 +63,7 @@ pub fn max_n_int_trans(
 pub fn max_n_int_rollup_trans(
     state: Internal,
     value: MaxInts<'static>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     let values: Vec<Reverse<i64>> = value.values.clone().into_iter().map(Reverse).collect();
     nmost_rollup_trans_function(

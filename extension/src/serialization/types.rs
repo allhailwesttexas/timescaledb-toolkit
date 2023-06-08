@@ -8,8 +8,8 @@ use flat_serialize::{impl_flat_serializable, FlatSerializable, WrapErr};
 
 use serde::{Deserialize, Serialize};
 
-use pg_sys::Oid;
-use pgx::*;
+use pgrx::pg_sys::Oid;
+use pgrx::*;
 
 /// Possibly a premature optimization, `ShortTypId` provides the ability to
 /// serialize and deserialize type Oids as `(namespace, name)` pairs, special
@@ -105,48 +105,48 @@ impl ShortTypIdSerializer {
     pub fn from_oid(oid: Oid) -> Self {
         use ShortTypIdSerializer::*;
         match oid {
-            pg_sys::BOOLOID => BOOL,
-            pg_sys::BYTEAOID => BYTEA,
-            pg_sys::CHAROID => CHAR,
-            pg_sys::NAMEOID => NAME,
-            pg_sys::INT8OID => INT8,
-            pg_sys::INT2OID => INT2,
-            pg_sys::INT2VECTOROID => INT2VECTOR,
-            pg_sys::INT4OID => INT4,
-            pg_sys::REGPROCOID => REGPROC,
-            pg_sys::TEXTOID => TEXT,
-            pg_sys::JSONOID => JSON,
-            pg_sys::XMLOID => XML,
-            pg_sys::POINTOID => POINT,
-            pg_sys::FLOAT4OID => FLOAT4,
-            pg_sys::FLOAT8OID => FLOAT8,
-            pg_sys::MACADDR8OID => MACADDR8,
-            pg_sys::VARCHAROID => VARCHAR,
-            pg_sys::DATEOID => DATE,
-            pg_sys::TIMEOID => TIME,
-            pg_sys::TIMESTAMPOID => TIMESTAMP,
-            pg_sys::TIMESTAMPTZOID => TIMESTAMPTZ,
-            pg_sys::INTERVALOID => INTERVAL,
-            pg_sys::TIMETZOID => TIMETZ,
-            pg_sys::JSONBOID => JSONB,
-            pg_sys::BOOLARRAYOID => BOOLARRAY,
-            pg_sys::BYTEAARRAYOID => BYTEAARRAY,
-            pg_sys::CHARARRAYOID => CHARARRAY,
-            pg_sys::NAMEARRAYOID => NAMEARRAY,
-            pg_sys::INT8ARRAYOID => INT8ARRAY,
-            pg_sys::INT2ARRAYOID => INT2ARRAY,
-            pg_sys::INT4ARRAYOID => INT4ARRAY,
-            pg_sys::TEXTARRAYOID => TEXTARRAY,
-            pg_sys::FLOAT4ARRAYOID => FLOAT4ARRAY,
-            pg_sys::FLOAT8ARRAYOID => FLOAT8ARRAY,
-            pg_sys::DATEARRAYOID => DATEARRAY,
-            pg_sys::TIMEARRAYOID => TIMEARRAY,
-            pg_sys::TIMESTAMPARRAYOID => TIMESTAMPARRAY,
-            pg_sys::TIMESTAMPTZARRAYOID => TIMESTAMPTZARRAY,
-            pg_sys::INTERVALARRAYOID => INTERVALARRAY,
-            pg_sys::TIMETZARRAYOID => TIMETZARRAY,
-            pg_sys::NUMERICARRAYOID => NUMERICARRAY,
-            pg_sys::JSONBARRAYOID => JSONBARRAY,
+            pgrx::pg_sys::BOOLOID => BOOL,
+            pgrx::pg_sys::BYTEAOID => BYTEA,
+            pgrx::pg_sys::CHAROID => CHAR,
+            pgrx::pg_sys::NAMEOID => NAME,
+            pgrx::pg_sys::INT8OID => INT8,
+            pgrx::pg_sys::INT2OID => INT2,
+            pgrx::pg_sys::INT2VECTOROID => INT2VECTOR,
+            pgrx::pg_sys::INT4OID => INT4,
+            pgrx::pg_sys::REGPROCOID => REGPROC,
+            pgrx::pg_sys::TEXTOID => TEXT,
+            pgrx::pg_sys::JSONOID => JSON,
+            pgrx::pg_sys::XMLOID => XML,
+            pgrx::pg_sys::POINTOID => POINT,
+            pgrx::pg_sys::FLOAT4OID => FLOAT4,
+            pgrx::pg_sys::FLOAT8OID => FLOAT8,
+            pgrx::pg_sys::MACADDR8OID => MACADDR8,
+            pgrx::pg_sys::VARCHAROID => VARCHAR,
+            pgrx::pg_sys::DATEOID => DATE,
+            pgrx::pg_sys::TIMEOID => TIME,
+            pgrx::pg_sys::TIMESTAMPOID => TIMESTAMP,
+            pgrx::pg_sys::TIMESTAMPTZOID => TIMESTAMPTZ,
+            pgrx::pg_sys::INTERVALOID => INTERVAL,
+            pgrx::pg_sys::TIMETZOID => TIMETZ,
+            pgrx::pg_sys::JSONBOID => JSONB,
+            pgrx::pg_sys::BOOLARRAYOID => BOOLARRAY,
+            pgrx::pg_sys::BYTEAARRAYOID => BYTEAARRAY,
+            pgrx::pg_sys::CHARARRAYOID => CHARARRAY,
+            pgrx::pg_sys::NAMEARRAYOID => NAMEARRAY,
+            pgrx::pg_sys::INT8ARRAYOID => INT8ARRAY,
+            pgrx::pg_sys::INT2ARRAYOID => INT2ARRAY,
+            pgrx::pg_sys::INT4ARRAYOID => INT4ARRAY,
+            pgrx::pg_sys::TEXTARRAYOID => TEXTARRAY,
+            pgrx::pg_sys::FLOAT4ARRAYOID => FLOAT4ARRAY,
+            pgrx::pg_sys::FLOAT8ARRAYOID => FLOAT8ARRAY,
+            pgrx::pg_sys::DATEARRAYOID => DATEARRAY,
+            pgrx::pg_sys::TIMEARRAYOID => TIMEARRAY,
+            pgrx::pg_sys::TIMESTAMPARRAYOID => TIMESTAMPARRAY,
+            pgrx::pg_sys::TIMESTAMPTZARRAYOID => TIMESTAMPTZARRAY,
+            pgrx::pg_sys::INTERVALARRAYOID => INTERVALARRAY,
+            pgrx::pg_sys::TIMETZARRAYOID => TIMETZARRAY,
+            pgrx::pg_sys::NUMERICARRAYOID => NUMERICARRAY,
+            pgrx::pg_sys::JSONBARRAYOID => JSONBARRAY,
             other => Other(PgTypId(other)),
         }
     }
@@ -154,48 +154,48 @@ impl ShortTypIdSerializer {
     pub fn to_oid(&self) -> Oid {
         use ShortTypIdSerializer::*;
         match self {
-            BOOL => pg_sys::BOOLOID,
-            BYTEA => pg_sys::BYTEAOID,
-            CHAR => pg_sys::CHAROID,
-            NAME => pg_sys::NAMEOID,
-            INT8 => pg_sys::INT8OID,
-            INT2 => pg_sys::INT2OID,
-            INT2VECTOR => pg_sys::INT2VECTOROID,
-            INT4 => pg_sys::INT4OID,
-            REGPROC => pg_sys::REGPROCOID,
-            TEXT => pg_sys::TEXTOID,
-            JSON => pg_sys::JSONOID,
-            XML => pg_sys::XMLOID,
-            POINT => pg_sys::POINTOID,
-            FLOAT4 => pg_sys::FLOAT4OID,
-            FLOAT8 => pg_sys::FLOAT8OID,
-            MACADDR8 => pg_sys::MACADDR8OID,
-            VARCHAR => pg_sys::VARCHAROID,
-            DATE => pg_sys::DATEOID,
-            TIME => pg_sys::TIMEOID,
-            TIMESTAMP => pg_sys::TIMESTAMPOID,
-            TIMESTAMPTZ => pg_sys::TIMESTAMPTZOID,
-            INTERVAL => pg_sys::INTERVALOID,
-            TIMETZ => pg_sys::TIMETZOID,
-            JSONB => pg_sys::JSONBOID,
-            BOOLARRAY => pg_sys::BOOLARRAYOID,
-            BYTEAARRAY => pg_sys::BYTEAARRAYOID,
-            CHARARRAY => pg_sys::CHARARRAYOID,
-            NAMEARRAY => pg_sys::NAMEARRAYOID,
-            INT8ARRAY => pg_sys::INT8ARRAYOID,
-            INT2ARRAY => pg_sys::INT2ARRAYOID,
-            INT4ARRAY => pg_sys::INT4ARRAYOID,
-            TEXTARRAY => pg_sys::TEXTARRAYOID,
-            FLOAT4ARRAY => pg_sys::FLOAT4ARRAYOID,
-            FLOAT8ARRAY => pg_sys::FLOAT8ARRAYOID,
-            DATEARRAY => pg_sys::DATEARRAYOID,
-            TIMEARRAY => pg_sys::TIMEARRAYOID,
-            TIMESTAMPARRAY => pg_sys::TIMESTAMPARRAYOID,
-            TIMESTAMPTZARRAY => pg_sys::TIMESTAMPTZARRAYOID,
-            INTERVALARRAY => pg_sys::INTERVALARRAYOID,
-            TIMETZARRAY => pg_sys::TIMETZARRAYOID,
-            NUMERICARRAY => pg_sys::NUMERICARRAYOID,
-            JSONBARRAY => pg_sys::JSONBARRAYOID,
+            BOOL => pgrx::pg_sys::BOOLOID,
+            BYTEA => pgrx::pg_sys::BYTEAOID,
+            CHAR => pgrx::pg_sys::CHAROID,
+            NAME => pgrx::pg_sys::NAMEOID,
+            INT8 => pgrx::pg_sys::INT8OID,
+            INT2 => pgrx::pg_sys::INT2OID,
+            INT2VECTOR => pgrx::pg_sys::INT2VECTOROID,
+            INT4 => pgrx::pg_sys::INT4OID,
+            REGPROC => pgrx::pg_sys::REGPROCOID,
+            TEXT => pgrx::pg_sys::TEXTOID,
+            JSON => pgrx::pg_sys::JSONOID,
+            XML => pgrx::pg_sys::XMLOID,
+            POINT => pgrx::pg_sys::POINTOID,
+            FLOAT4 => pgrx::pg_sys::FLOAT4OID,
+            FLOAT8 => pgrx::pg_sys::FLOAT8OID,
+            MACADDR8 => pgrx::pg_sys::MACADDR8OID,
+            VARCHAR => pgrx::pg_sys::VARCHAROID,
+            DATE => pgrx::pg_sys::DATEOID,
+            TIME => pgrx::pg_sys::TIMEOID,
+            TIMESTAMP => pgrx::pg_sys::TIMESTAMPOID,
+            TIMESTAMPTZ => pgrx::pg_sys::TIMESTAMPTZOID,
+            INTERVAL => pgrx::pg_sys::INTERVALOID,
+            TIMETZ => pgrx::pg_sys::TIMETZOID,
+            JSONB => pgrx::pg_sys::JSONBOID,
+            BOOLARRAY => pgrx::pg_sys::BOOLARRAYOID,
+            BYTEAARRAY => pgrx::pg_sys::BYTEAARRAYOID,
+            CHARARRAY => pgrx::pg_sys::CHARARRAYOID,
+            NAMEARRAY => pgrx::pg_sys::NAMEARRAYOID,
+            INT8ARRAY => pgrx::pg_sys::INT8ARRAYOID,
+            INT2ARRAY => pgrx::pg_sys::INT2ARRAYOID,
+            INT4ARRAY => pgrx::pg_sys::INT4ARRAYOID,
+            TEXTARRAY => pgrx::pg_sys::TEXTARRAYOID,
+            FLOAT4ARRAY => pgrx::pg_sys::FLOAT4ARRAYOID,
+            FLOAT8ARRAY => pgrx::pg_sys::FLOAT8ARRAYOID,
+            DATEARRAY => pgrx::pg_sys::DATEARRAYOID,
+            TIMEARRAY => pgrx::pg_sys::TIMEARRAYOID,
+            TIMESTAMPARRAY => pgrx::pg_sys::TIMESTAMPARRAYOID,
+            TIMESTAMPTZARRAY => pgrx::pg_sys::TIMESTAMPTZARRAYOID,
+            INTERVALARRAY => pgrx::pg_sys::INTERVALARRAYOID,
+            TIMETZARRAY => pgrx::pg_sys::TIMETZARRAYOID,
+            NUMERICARRAY => pgrx::pg_sys::NUMERICARRAYOID,
+            JSONBARRAY => pgrx::pg_sys::JSONBARRAYOID,
             Other(other) => other.0,
         }
     }
@@ -213,43 +213,43 @@ impl Serialize for PgTypId {
         S: serde::Serializer,
     {
         unsafe {
-            let tuple = pg_sys::SearchSysCache1(
-                pg_sys::SysCacheIdentifier_TYPEOID as _,
-                pg_sys::Datum::from(self.0),
+            let tuple = pgrx::pg_sys::SearchSysCache1(
+                pgrx::pg_sys::SysCacheIdentifier_TYPEOID as _,
+                pgrx::pg_sys::Datum::from(self.0),
             );
             if tuple.is_null() {
-                pgx::error!("no type info for oid {}", self.0);
+                pgrx::error!("no type info for oid {}", self.0);
             }
 
-            let type_tuple: pg_sys::Form_pg_type = get_struct(tuple);
+            let type_tuple: pgrx::pg_sys::Form_pg_type = get_struct(tuple);
 
-            let namespace = pg_sys::get_namespace_name((*type_tuple).typnamespace);
+            let namespace = pgrx::pg_sys::get_namespace_name((*type_tuple).typnamespace);
             if namespace.is_null() {
-                pgx::error!("invalid schema oid {}", (*type_tuple).typnamespace);
+                pgrx::error!("invalid schema oid {}", (*type_tuple).typnamespace);
             }
 
             let namespace_len = CStr::from_ptr(namespace).to_bytes().len();
-            let namespace = pg_sys::pg_server_to_any(
+            let namespace = pgrx::pg_sys::pg_server_to_any(
                 namespace,
                 namespace_len as _,
-                pg_sys::pg_enc_PG_UTF8 as _,
+                pgrx::pg_sys::pg_enc_PG_UTF8 as _,
             );
             let namespace = CStr::from_ptr(namespace);
             let namespace = namespace.to_str().unwrap();
 
             let type_name = (*type_tuple).typname.data.as_ptr();
             let type_name_len = CStr::from_ptr(type_name).to_bytes().len();
-            let type_name = pg_sys::pg_server_to_any(
+            let type_name = pgrx::pg_sys::pg_server_to_any(
                 type_name,
                 type_name_len as _,
-                pg_sys::pg_enc_PG_UTF8 as _,
+                pgrx::pg_sys::pg_enc_PG_UTF8 as _,
             );
             let type_name = CStr::from_ptr(type_name);
             let type_name = type_name.to_str().unwrap();
 
             let qualified_name: (&str, &str) = (namespace, type_name);
             let res = qualified_name.serialize(serializer);
-            pg_sys::ReleaseSysCache(tuple);
+            pgrx::pg_sys::ReleaseSysCache(tuple);
             res
         }
     }
@@ -269,34 +269,34 @@ impl<'de> Deserialize<'de> for PgTypId {
         );
         let (namespace_len, name_len) = (namespace.to_bytes().len(), name.to_bytes().len());
         unsafe {
-            let namespace = pg_sys::pg_any_to_server(
+            let namespace = pgrx::pg_sys::pg_any_to_server(
                 namespace.as_ptr(),
                 namespace_len as _,
-                pg_sys::pg_enc_PG_UTF8 as _,
+                pgrx::pg_sys::pg_enc_PG_UTF8 as _,
             );
             let namespace = CStr::from_ptr(namespace);
 
             let name =
-                pg_sys::pg_any_to_server(name.as_ptr(), name_len as _, pg_sys::pg_enc_PG_UTF8 as _);
+                pgrx::pg_sys::pg_any_to_server(name.as_ptr(), name_len as _, pgrx::pg_sys::pg_enc_PG_UTF8 as _);
             let name = CStr::from_ptr(name);
 
-            let namespace_id = pg_sys::LookupExplicitNamespace(namespace.as_ptr(), true);
-            if namespace_id == pg_sys::InvalidOid {
+            let namespace_id = pgrx::pg_sys::LookupExplicitNamespace(namespace.as_ptr(), true);
+            if namespace_id == pgrx::pg_sys::InvalidOid {
                 return Err(D::Error::custom(format!(
                     "invalid namespace {:?}",
                     namespace
                 )));
             }
 
-            let type_id = pg_sys::GetSysCacheOid(
-                pg_sys::SysCacheIdentifier_TYPENAMENSP as _,
-                pg_sys::Anum_pg_type_oid as _,
-                pg_sys::Datum::from(name.as_ptr()),
-                pg_sys::Datum::from(namespace_id),
-                pg_sys::Datum::from(0), //unused
-                pg_sys::Datum::from(0), //unused
+            let type_id = pgrx::pg_sys::GetSysCacheOid(
+                pgrx::pg_sys::SysCacheIdentifier_TYPENAMENSP as _,
+                pgrx::pg_sys::Anum_pg_type_oid as _,
+                pgrx::pg_sys::Datum::from(name.as_ptr()),
+                pgrx::pg_sys::Datum::from(namespace_id),
+                pgrx::pg_sys::Datum::from(0), //unused
+                pgrx::pg_sys::Datum::from(0), //unused
             );
-            if type_id == pg_sys::InvalidOid {
+            if type_id == pgrx::pg_sys::InvalidOid {
                 return Err(D::Error::custom(format!(
                     "invalid type {:?}.{:?}",
                     namespace, name
@@ -308,7 +308,7 @@ impl<'de> Deserialize<'de> for PgTypId {
     }
 }
 
-unsafe fn get_struct<T>(tuple: pg_sys::HeapTuple) -> *mut T {
+unsafe fn get_struct<T>(tuple: pgrx::pg_sys::HeapTuple) -> *mut T {
     //((char *) ((TUP)->t_data) + (TUP)->t_data->t_hoff)
     let t_data: *mut u8 = (*tuple).t_data.cast();
     let t_hoff = (*(*tuple).t_data).t_hoff;
@@ -320,8 +320,8 @@ unsafe fn get_struct<T>(tuple: pg_sys::HeapTuple) -> *mut T {
 mod tests {
 
     use super::{PgTypId, ShortTypeId};
-    use pgx::{
-        pg_sys::{BOOLOID, CHAROID, CIRCLEOID},
+    use pgrx::{
+        pgrx::pg_sys::{BOOLOID, CHAROID, CIRCLEOID},
         pg_test,
     };
 

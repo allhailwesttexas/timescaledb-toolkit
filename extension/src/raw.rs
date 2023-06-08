@@ -1,7 +1,7 @@
 #![allow(non_camel_case_types)]
 
-use pgx::*;
-use pgx_sql_entity_graph::metadata::{
+use pgrx::*;
+use pgrx_sql_entity_graph::metadata::{
     ArgumentError, Returns, ReturnsError, SqlMapping, SqlTranslatable,
 };
 
@@ -28,9 +28,9 @@ macro_rules! raw_type {
     ($name:ident, $tyid: path, $arrayid: path) => {
         impl FromDatum for $name {
             unsafe fn from_polymorphic_datum(
-                datum: pg_sys::Datum,
+                datum: pgrx::pg_sys::Datum,
                 is_null: bool,
-                _typoid: pg_sys::Oid,
+                _typoid: pgrx::pg_sys::Oid,
             ) -> Option<Self>
             where
                 Self: Sized,
@@ -43,24 +43,24 @@ macro_rules! raw_type {
         }
 
         impl IntoDatum for $name {
-            fn into_datum(self) -> Option<pg_sys::Datum> {
+            fn into_datum(self) -> Option<pgrx::pg_sys::Datum> {
                 Some(self.0)
             }
-            fn type_oid() -> pg_sys::Oid {
+            fn type_oid() -> pgrx::pg_sys::Oid {
                 $tyid
             }
-            fn array_type_oid() -> pg_sys::Oid {
+            fn array_type_oid() -> pgrx::pg_sys::Oid {
                 $arrayid
             }
         }
 
-        impl From<pg_sys::Datum> for $name {
-            fn from(d: pg_sys::Datum) -> Self {
+        impl From<pgrx::pg_sys::Datum> for $name {
+            fn from(d: pgrx::pg_sys::Datum) -> Self {
                 Self(d)
             }
         }
 
-        impl From<$name> for pg_sys::Datum {
+        impl From<$name> for pgrx::pg_sys::Datum {
             fn from(v: $name) -> Self {
                 v.0
             }
@@ -79,58 +79,58 @@ macro_rules! raw_type {
 }
 
 #[derive(Clone, Copy)]
-pub struct bytea(pub pg_sys::Datum);
+pub struct bytea(pub pgrx::pg_sys::Datum);
 
-raw_type!(bytea, pg_sys::BYTEAOID, pg_sys::BYTEAARRAYOID);
+raw_type!(bytea, pgrx::pg_sys::BYTEAOID, pgrx::pg_sys::BYTEAARRAYOID);
 
 #[derive(Clone, Copy)]
-pub struct text(pub pg_sys::Datum);
+pub struct text(pub pgrx::pg_sys::Datum);
 
-raw_type!(text, pg_sys::TEXTOID, pg_sys::TEXTARRAYOID);
+raw_type!(text, pgrx::pg_sys::TEXTOID, pgrx::pg_sys::TEXTARRAYOID);
 
-pub struct TimestampTz(pub pg_sys::Datum);
+pub struct TimestampTz(pub pgrx::pg_sys::Datum);
 
 raw_type!(
     TimestampTz,
-    pg_sys::TIMESTAMPTZOID,
-    pg_sys::TIMESTAMPTZARRAYOID
+    pgrx::pg_sys::TIMESTAMPTZOID,
+    pgrx::pg_sys::TIMESTAMPTZARRAYOID
 );
 
-impl From<TimestampTz> for pg_sys::TimestampTz {
+impl From<TimestampTz> for pgrx::pg_sys::TimestampTz {
     fn from(tstz: TimestampTz) -> Self {
         tstz.0.value() as _
     }
 }
 
-impl From<pg_sys::TimestampTz> for TimestampTz {
-    fn from(ts: pg_sys::TimestampTz) -> Self {
-        Self(pg_sys::Datum::from(ts))
+impl From<pgrx::pg_sys::TimestampTz> for TimestampTz {
+    fn from(ts: pgrx::pg_sys::TimestampTz) -> Self {
+        Self(pgrx::pg_sys::Datum::from(ts))
     }
 }
 
-pub struct AnyElement(pub pg_sys::Datum);
+pub struct AnyElement(pub pgrx::pg_sys::Datum);
 
-raw_type!(AnyElement, pg_sys::ANYELEMENTOID, pg_sys::ANYARRAYOID);
+raw_type!(AnyElement, pgrx::pg_sys::ANYELEMENTOID, pgrx::pg_sys::ANYARRAYOID);
 
-pub struct tstzrange(pub pg_sys::Datum);
+pub struct tstzrange(pub pgrx::pg_sys::Datum);
 
-raw_type!(tstzrange, pg_sys::TSTZRANGEOID, pg_sys::TSTZRANGEARRAYOID);
+raw_type!(tstzrange, pgrx::pg_sys::TSTZRANGEOID, pgrx::pg_sys::TSTZRANGEARRAYOID);
 
-pub struct Interval(pub pg_sys::Datum);
+pub struct Interval(pub pgrx::pg_sys::Datum);
 
-raw_type!(Interval, pg_sys::INTERVALOID, pg_sys::INTERVALARRAYOID);
+raw_type!(Interval, pgrx::pg_sys::INTERVALOID, pgrx::pg_sys::INTERVALARRAYOID);
 
 impl From<i64> for Interval {
     fn from(interval: i64) -> Self {
-        let interval = pg_sys::Interval {
+        let interval = pgrx::pg_sys::Interval {
             time: interval,
             ..Default::default()
         };
         let interval = unsafe {
             let ptr =
-                pg_sys::palloc(std::mem::size_of::<pg_sys::Interval>()) as *mut pg_sys::Interval;
+                pgrx::pg_sys::palloc(std::mem::size_of::<pgrx::pg_sys::Interval>()) as *mut pgrx::pg_sys::Interval;
             *ptr = interval;
-            Interval(pg_sys::Datum::from(ptr))
+            Interval(pgrx::pg_sys::Datum::from(ptr))
         };
         // Now we have a valid Interval in at least one sense.  But we have the
         // microseconds in the `time` field and `day` and `month` are both 0,
@@ -144,12 +144,12 @@ impl From<i64> for Interval {
         //  result = DatumGetIntervalP(DirectFunctionCall1(interval_justify_hours,
         //                                                 IntervalPGetDatum(result)));
         // So if we want the same behavior, we need to call interval_justify_hours too:
-        let function_args = vec![Some(pg_sys::Datum::from(interval))];
-        unsafe { pgx::direct_function_call(pg_sys::interval_justify_hours, function_args) }
+        let function_args = vec![Some(pgrx::pg_sys::Datum::from(interval))];
+        unsafe { pgrx::direct_function_call(pgrx::pg_sys::interval_justify_hours, &function_args) }
             .expect("interval_justify_hours does not return None")
     }
 }
 
-pub struct regproc(pub pg_sys::Datum);
+pub struct regproc(pub pgrx::pg_sys::Datum);
 
-raw_type!(regproc, pg_sys::REGPROCOID, pg_sys::REGPROCARRAYOID);
+raw_type!(regproc, pgrx::pg_sys::REGPROCOID, pgrx::pg_sys::REGPROCARRAYOID);

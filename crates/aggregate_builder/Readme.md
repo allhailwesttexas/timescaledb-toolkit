@@ -93,11 +93,11 @@ pub mod aggregate_name {
     #[allow(dead_code)]
     pub const PARALLEL_SAFE: bool = true;
 
-    #[pgx::pg_extern(immutable, parallel_safe)]
+    #[pgrx::pg_extern(immutable, parallel_safe)]
     pub fn aggregate_name_transition_fn_outer(
-        __inner: pgx::Internal,
+        __inner: pgrx::Internal,
         value: RustType,
-        __fcinfo: pg_sys::FunctionCallInfo,
+        __fcinfo: pgrx::pg_sys::FunctionCallInfo,
     ) -> Option<Internal> {
         use crate::palloc::{Inner, InternalAsValue, ToInternal};
         unsafe {
@@ -140,10 +140,10 @@ pub mod aggregate_name {
         // elided
     }
 
-    #[pgx::pg_extern(immutable, parallel_safe)]
+    #[pgrx::pg_extern(immutable, parallel_safe)]
     pub fn aggregate_name_finally_fn_outer(
-        __internal: pgx::Internal,
-        __fcinfo: pg_sys::FunctionCallInfo,
+        __internal: pgrx::Internal,
+        __fcinfo: pgrx::pg_sys::FunctionCallInfo,
     ) -> Option<String> {
         use crate::palloc::InternalAsValue;
         unsafe {
@@ -166,8 +166,8 @@ pub mod aggregate_name {
         // elided
     }
 
-    #[pgx::pg_extern(strict, immutable, parallel_safe, schema = "toolkit_experimental")]
-    pub fn aggregate_name_serialize_fn_outer(__internal: pgx::Internal) -> bytea {
+    #[pgrx::pg_extern(strict, immutable, parallel_safe, schema = "toolkit_experimental")]
+    pub fn aggregate_name_serialize_fn_outer(__internal: pgrx::Internal) -> bytea {
         use crate::palloc::{Inner, InternalAsValue};
         // Convert to the rust transition type, see the comment in the
         // transition function for why we store an `Option<State>`
@@ -185,7 +185,7 @@ pub mod aggregate_name {
         // elided
     }
 
-    #[pgx::pg_extern(strict, immutable, parallel_safe, schema = "toolkit_experimental")]
+    #[pgrx::pg_extern(strict, immutable, parallel_safe, schema = "toolkit_experimental")]
     pub fn aggregate_name_deserialize_fn_outer(
         bytes: crate::raw::bytea,
         _internal: Internal,
@@ -204,11 +204,11 @@ pub mod aggregate_name {
         // elided
     }
 
-    #[pgx::pg_extern(immutable, parallel_safe, schema = "toolkit_experimental")]
+    #[pgrx::pg_extern(immutable, parallel_safe, schema = "toolkit_experimental")]
     pub fn aggregate_name_combine_fn_outer(
         a: Internal,
         b: Internal,
-        __fcinfo: pg_sys::FunctionCallInfo,
+        __fcinfo: pgrx::pg_sys::FunctionCallInfo,
     ) -> Option<Internal> {
         use crate::palloc::{Inner, InternalAsValue, ToInternal};
         unsafe {
@@ -235,7 +235,7 @@ pub mod aggregate_name {
     }
 
     // SQL generated for the aggregate
-    pgx::extension_sql!("\n\
+    pgrx::extension_sql!("\n\
         CREATE AGGREGATE toolkit_experimental.aggregate_name (value RustType) (\n\
             stype = internal,\n\
             sfunc = toolkit_experimental.aggregate_name_transition_fn_outer,\n\

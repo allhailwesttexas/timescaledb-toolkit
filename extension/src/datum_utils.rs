@@ -11,31 +11,31 @@ use serde::{
     Deserialize, Serialize,
 };
 
-use pg_sys::{Datum, Oid};
-use pgx::*;
+use pgrx::pg_sys::{Datum, Oid};
+use pgrx::*;
 
 use crate::serialization::{PgCollationId, ShortTypeId};
 
 pub(crate) unsafe fn deep_copy_datum(datum: Datum, typoid: Oid) -> Datum {
-    let tentry = pg_sys::lookup_type_cache(typoid, 0_i32);
+    let tentry = pgrx::pg_sys::lookup_type_cache(typoid, 0_i32);
     if (*tentry).typbyval {
         datum
     } else if (*tentry).typlen > 0 {
         // only varlena's can be toasted, manually copy anything with len >0
         let size = (*tentry).typlen as usize;
-        let copy = pg_sys::palloc0(size);
+        let copy = pgrx::pg_sys::palloc0(size);
         std::ptr::copy(datum.cast_mut_ptr(), copy as *mut u8, size);
-        pg_sys::Datum::from(copy)
+        pgrx::pg_sys::Datum::from(copy)
     } else {
-        pg_sys::Datum::from(pg_sys::pg_detoast_datum_copy(datum.cast_mut_ptr()))
+        pgrx::pg_sys::Datum::from(pgrx::pg_sys::pg_detoast_datum_copy(datum.cast_mut_ptr()))
     }
 }
 
 // If datum is an alloced type, free the associated memory
 pub(crate) unsafe fn free_datum(datum: Datum, typoid: Oid) {
-    let tentry = pg_sys::lookup_type_cache(typoid, 0_i32);
+    let tentry = pgrx::pg_sys::lookup_type_cache(typoid, 0_i32);
     if !(*tentry).typbyval {
-        pg_sys::pfree(datum.cast_mut_ptr())
+        pgrx::pg_sys::pfree(datum.cast_mut_ptr())
     }
 }
 
@@ -46,12 +46,12 @@ pub fn ts_interval_sum_to_ms(
     interval: &crate::raw::Interval,
 ) -> i64 {
     extern "C" {
-        fn timestamptz_pl_interval(fcinfo: pg_sys::FunctionCallInfo) -> pg_sys::Datum;
+        fn timestamptz_pl_interval(fcinfo: pgrx::pg_sys::FunctionCallInfo) -> pgrx::pg_sys::Datum;
     }
     let bound = unsafe {
-        pg_sys::DirectFunctionCall2Coll(
+        pgrx::pg_sys::DirectFunctionCall2Coll(
             Some(timestamptz_pl_interval),
-            pg_sys::InvalidOid,
+            pgrx::pg_sys::InvalidOid,
             ref_time.0,
             interval.0,
         )
@@ -64,18 +64,18 @@ pub fn interval_to_ms(ref_time: &crate::raw::TimestampTz, interval: &crate::raw:
 }
 
 pub struct TextSerializableDatumWriter {
-    flinfo: pg_sys::FmgrInfo,
+    flinfo: pgrx::pg_sys::FmgrInfo,
 }
 
 impl TextSerializableDatumWriter {
     pub fn from_oid(typoid: Oid) -> Self {
-        let mut type_output = pg_sys::Oid::INVALID;
+        let mut type_output = pgrx::pg_sys::Oid::INVALID;
         let mut typ_is_varlena = false;
         let mut flinfo = unsafe { std::mem::MaybeUninit::zeroed().assume_init() };
 
         unsafe {
-            pg_sys::getTypeOutputInfo(typoid, &mut type_output, &mut typ_is_varlena);
-            pg_sys::fmgr_info(type_output, &mut flinfo);
+            pgrx::pg_sys::getTypeOutputInfo(typoid, &mut type_output, &mut typ_is_varlena);
+            pgrx::pg_sys::fmgr_info(type_output, &mut flinfo);
         }
 
         TextSerializableDatumWriter { flinfo }
@@ -87,18 +87,18 @@ impl TextSerializableDatumWriter {
 }
 
 pub struct DatumFromSerializedTextReader {
-    flinfo: pg_sys::FmgrInfo,
-    typ_io_param: pg_sys::Oid,
+    flinfo: pgrx::pg_sys::FmgrInfo,
+    typ_io_param: pgrx::pg_sys::Oid,
 }
 
 impl DatumFromSerializedTextReader {
     pub fn from_oid(typoid: Oid) -> Self {
-        let mut type_input = pg_sys::Oid::INVALID;
-        let mut typ_io_param = pg_sys::oids::Oid::INVALID;
+        let mut type_input = pgrx::pg_sys::Oid::INVALID;
+        let mut typ_io_param = pgrx::pg_sys::oids::Oid::INVALID;
         let mut flinfo = unsafe { std::mem::MaybeUninit::zeroed().assume_init() };
         unsafe {
-            pg_sys::getTypeInputInfo(typoid, &mut type_input, &mut typ_io_param);
-            pg_sys::fmgr_info(type_input, &mut flinfo);
+            pgrx::pg_sys::getTypeInputInfo(typoid, &mut type_input, &mut typ_io_param);
+            pgrx::pg_sys::fmgr_info(type_input, &mut flinfo);
         }
 
         DatumFromSerializedTextReader {
@@ -110,52 +110,52 @@ impl DatumFromSerializedTextReader {
     pub fn read_datum(&mut self, datum_str: &str) -> Datum {
         let cstr = std::ffi::CString::new(datum_str).unwrap(); // TODO: error handling
         let cstr_ptr = cstr.as_ptr() as *mut std::os::raw::c_char;
-        unsafe { pg_sys::InputFunctionCall(&mut self.flinfo, cstr_ptr, self.typ_io_param, -1) }
+        unsafe { pgrx::pg_sys::InputFunctionCall(&mut self.flinfo, cstr_ptr, self.typ_io_param, -1) }
     }
 }
 
-pub struct TextSerializeableDatum(Datum, *mut pg_sys::FmgrInfo);
+pub struct TextSerializeableDatum(Datum, *mut pgrx::pg_sys::FmgrInfo);
 
 impl Serialize for TextSerializeableDatum {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
-        let chars = unsafe { pg_sys::OutputFunctionCall(self.1, self.0) };
+        let chars = unsafe { pgrx::pg_sys::OutputFunctionCall(self.1, self.0) };
         let cstr = unsafe { std::ffi::CStr::from_ptr(chars) };
         serializer.serialize_str(cstr.to_str().unwrap())
     }
 }
 
 pub(crate) struct DatumHashBuilder {
-    pub info: pg_sys::FunctionCallInfo,
-    pub type_id: pg_sys::Oid,
-    pub collation: pg_sys::Oid,
+    pub info: pgrx::pg_sys::FunctionCallInfo,
+    pub type_id: pgrx::pg_sys::Oid,
+    pub collation: pgrx::pg_sys::Oid,
 }
 
 impl DatumHashBuilder {
-    pub(crate) unsafe fn from_type_id(type_id: pg_sys::Oid, collation: Option<Oid>) -> Self {
+    pub(crate) unsafe fn from_type_id(type_id: pgrx::pg_sys::Oid, collation: Option<Oid>) -> Self {
         let entry =
-            pg_sys::lookup_type_cache(type_id, pg_sys::TYPECACHE_HASH_EXTENDED_PROC_FINFO as _);
+            pgrx::pg_sys::lookup_type_cache(type_id, pgrx::pg_sys::TYPECACHE_HASH_EXTENDED_PROC_FINFO as _);
         Self::from_type_cache_entry(entry, collation)
     }
 
     pub(crate) unsafe fn from_type_cache_entry(
-        tentry: *const pg_sys::TypeCacheEntry,
+        tentry: *const pgrx::pg_sys::TypeCacheEntry,
         collation: Option<Oid>,
     ) -> Self {
         let flinfo = if (*tentry).hash_extended_proc_finfo.fn_addr.is_some() {
             &(*tentry).hash_extended_proc_finfo
         } else {
-            pgx::error!("no hash function");
+            pgrx::error!("no hash function");
         };
 
         // 1 argument for the key, 1 argument for the seed
         let size =
-            size_of::<pg_sys::FunctionCallInfoBaseData>() + size_of::<pg_sys::NullableDatum>() * 2;
-        let mut info = pg_sys::palloc0(size) as pg_sys::FunctionCallInfo;
+            size_of::<pgrx::pg_sys::FunctionCallInfoBaseData>() + size_of::<pgrx::pg_sys::NullableDatum>() * 2;
+        let mut info = pgrx::pg_sys::palloc0(size) as pgrx::pg_sys::FunctionCallInfo;
 
-        (*info).flinfo = flinfo as *const pg_sys::FmgrInfo as *mut pg_sys::FmgrInfo;
+        (*info).flinfo = flinfo as *const pgrx::pg_sys::FmgrInfo as *mut pgrx::pg_sys::FmgrInfo;
         (*info).context = std::ptr::null_mut();
         (*info).resultinfo = std::ptr::null_mut();
         (*info).fncollation = (*tentry).typcollation;
@@ -199,7 +199,7 @@ impl Hasher for DatumHashBuilder {
         //      buffer for each, probably should have separate args
         let value = unsafe {
             let value = (*(*self.info).flinfo).fn_addr.unwrap()(self.info);
-            (*self.info).args.as_mut_slice(1)[0] = pg_sys::NullableDatum {
+            (*self.info).args.as_mut_slice(1)[0] = pgrx::pg_sys::NullableDatum {
                 value: Datum::from(0_usize),
                 isnull: true,
             };
@@ -222,7 +222,7 @@ impl Hasher for DatumHashBuilder {
 
     fn write_usize(&mut self, i: usize) {
         unsafe {
-            (*self.info).args.as_mut_slice(1)[0] = pg_sys::NullableDatum {
+            (*self.info).args.as_mut_slice(1)[0] = pgrx::pg_sys::NullableDatum {
                 value: Datum::from(i),
                 isnull: false,
             };
@@ -244,7 +244,7 @@ impl Serialize for DatumHashBuilder {
     where
         S: serde::Serializer,
     {
-        let collation = if self.collation == pg_sys::oids::Oid::INVALID {
+        let collation = if self.collation == pgrx::pg_sys::oids::Oid::INVALID {
             None
         } else {
             Some(PgCollationId(self.collation))
@@ -277,7 +277,7 @@ fn round_to_multiple(value: usize, multiple: usize) -> usize {
 }
 
 #[inline]
-fn padded_va_len(ptr: *const pg_sys::varlena) -> usize {
+fn padded_va_len(ptr: *const pgrx::pg_sys::varlena) -> usize {
     unsafe { round_to_multiple(varsize_any(ptr), 8) }
 }
 
@@ -352,7 +352,7 @@ impl From<(Oid, Vec<Datum>)> for DatumStore<'_> {
     fn from(input: (Oid, Vec<Datum>)) -> Self {
         let (oid, datums) = input;
         let (tlen, typbyval) = unsafe {
-            let tentry = pg_sys::lookup_type_cache(oid, 0_i32);
+            let tentry = pgrx::pg_sys::lookup_type_cache(oid, 0_i32);
             ((*tentry).typlen, (*tentry).typbyval)
         };
         assert!(tlen.is_positive() || tlen == -1 || tlen == -2);
@@ -382,7 +382,7 @@ impl From<(Oid, Vec<Datum>)> for DatumStore<'_> {
             for datum in datums {
                 unsafe {
                     let ptr =
-                        pg_sys::pg_detoast_datum_packed(datum.cast_mut_ptr::<pg_sys::varlena>());
+                        pgrx::pg_sys::pg_detoast_datum_packed(datum.cast_mut_ptr::<pgrx::pg_sys::varlena>());
                     let va_len = varsize_any(ptr);
 
                     ptrs.push(ptr);
@@ -468,7 +468,7 @@ impl<'a, 'b> Iterator for DatumStoreIterator<'a, 'b> {
                     unsafe {
                         let va = store.data.slice().as_ptr().offset(*next_offset as _);
                         *next_offset += padded_va_len(va as *const _) as u32;
-                        Some(pg_sys::Datum::from(va))
+                        Some(pgrx::pg_sys::Datum::from(va))
                     }
                 }
             }
@@ -482,7 +482,7 @@ impl<'a, 'b> Iterator for DatumStoreIterator<'a, 'b> {
                     None
                 } else {
                     *next_index += 1;
-                    Some(pg_sys::Datum::from(unsafe {
+                    Some(pgrx::pg_sys::Datum::from(unsafe {
                         store.data.slice().as_ptr().offset(idx as _)
                     }))
                 }
@@ -494,7 +494,7 @@ impl<'a, 'b> Iterator for DatumStoreIterator<'a, 'b> {
 impl<'a> DatumStore<'a> {
     pub fn iter<'b>(&'b self) -> DatumStoreIterator<'a, 'b> {
         unsafe {
-            let tentry = pg_sys::lookup_type_cache(self.type_oid.into(), 0_i32);
+            let tentry = pgrx::pg_sys::lookup_type_cache(self.type_oid.into(), 0_i32);
             if (*tentry).typbyval {
                 // Datum by value
                 DatumStoreIterator::Value {
@@ -527,7 +527,7 @@ impl<'a> DatumStore<'a> {
     }
 
     pub fn into_anyelement_iter(self) -> impl Iterator<Item = AnyElement> + 'a {
-        let oid: pg_sys::Oid = self.type_oid.into();
+        let oid: pgrx::pg_sys::Oid = self.type_oid.into();
         self.into_iter()
             .map(move |x| unsafe { AnyElement::from_polymorphic_datum(x, false, oid) }.unwrap())
     }
@@ -582,7 +582,7 @@ impl<'a> Iterator for DatumStoreIntoIterator<'a> {
                     unsafe {
                         let va = store.data.slice().as_ptr().offset(*next_offset as _);
                         *next_offset += padded_va_len(va as *const _) as u32;
-                        Some(pg_sys::Datum::from(va))
+                        Some(pgrx::pg_sys::Datum::from(va))
                     }
                 }
             }
@@ -596,7 +596,7 @@ impl<'a> Iterator for DatumStoreIntoIterator<'a> {
                     None
                 } else {
                     *next_index += 1;
-                    Some(pg_sys::Datum::from(unsafe {
+                    Some(pgrx::pg_sys::Datum::from(unsafe {
                         store.data.slice().as_ptr().offset(idx as _)
                     }))
                 }
@@ -611,7 +611,7 @@ impl<'a> IntoIterator for DatumStore<'a> {
 
     fn into_iter(self) -> Self::IntoIter {
         unsafe {
-            let tentry = pg_sys::lookup_type_cache(self.type_oid.into(), 0_i32);
+            let tentry = pgrx::pg_sys::lookup_type_cache(self.type_oid.into(), 0_i32);
             if (*tentry).typbyval {
                 // Datum by value
                 DatumStoreIntoIterator::Value {

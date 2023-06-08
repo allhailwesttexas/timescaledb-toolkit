@@ -4,24 +4,24 @@ use std::{
     ptr::NonNull,
 };
 
-use pgx::*;
+use pgrx::*;
 
-pub unsafe fn in_memory_context<T, F: FnOnce() -> T>(mctx: pg_sys::MemoryContext, f: F) -> T {
-    let prev_ctx = pg_sys::CurrentMemoryContext;
-    pg_sys::CurrentMemoryContext = mctx;
+pub unsafe fn in_memory_context<T, F: FnOnce() -> T>(mctx: pgrx::pg_sys::MemoryContext, f: F) -> T {
+    let prev_ctx = pgrx::pg_sys::CurrentMemoryContext;
+    pgrx::pg_sys::CurrentMemoryContext = mctx;
     let t = f();
-    pg_sys::CurrentMemoryContext = prev_ctx;
+    pgrx::pg_sys::CurrentMemoryContext = prev_ctx;
     t
 }
 
-pub use pgx::Internal;
+pub use pgrx::Internal;
 
-/// Extension trait to translate postgres-understood `pgx::Internal` type into
+/// Extension trait to translate postgres-understood `pgrx::Internal` type into
 /// the well-typed pointer type `Option<Inner<T>>`.
 ///
 /// # Safety
 ///
-/// This trait should only ever be implemented for `pgx::Internal`
+/// This trait should only ever be implemented for `pgrx::Internal`
 /// There is an lifetime constraint on the returned pointer, though this is
 /// currently implicit.
 pub unsafe trait InternalAsValue {
@@ -46,7 +46,7 @@ unsafe impl InternalAsValue for Internal {
 }
 
 /// Extension trait to turn the typed pointers `Inner<...>` and
-/// `Option<Inner<...>>` into the postgres-understood `pgx::Internal` type.
+/// `Option<Inner<...>>` into the postgres-understood `pgrx::Internal` type.
 ///
 /// # Safety
 /// The value input must live as long as postgres expects. TODO more info
@@ -72,13 +72,13 @@ impl<T> DerefMut for Inner<T> {
 
 unsafe impl<T> ToInternal for Option<Inner<T>> {
     fn internal(self) -> Option<Internal> {
-        self.map(|p| Internal::from(Some(pg_sys::Datum::from(p.0.as_ptr()))))
+        self.map(|p| Internal::from(Some(pgrx::pg_sys::Datum::from(p.0.as_ptr()))))
     }
 }
 
 unsafe impl<T> ToInternal for Inner<T> {
     fn internal(self) -> Option<Internal> {
-        Some(Internal::from(Some(pg_sys::Datum::from(self.0.as_ptr()))))
+        Some(Internal::from(Some(pgrx::pg_sys::Datum::from(self.0.as_ptr()))))
     }
 }
 
@@ -91,13 +91,13 @@ impl<T> From<T> for Inner<T> {
 // TODO these last two should probably be `unsafe`
 unsafe impl<T> ToInternal for *mut T {
     fn internal(self) -> Option<Internal> {
-        Some(Internal::from(Some(pg_sys::Datum::from(self))))
+        Some(Internal::from(Some(pgrx::pg_sys::Datum::from(self))))
     }
 }
 
 unsafe impl<T> ToInternal for *const T {
     fn internal(self) -> Option<Internal> {
-        Some(Internal::from(Some(pg_sys::Datum::from(self))))
+        Some(Internal::from(Some(pgrx::pg_sys::Datum::from(self))))
     }
 }
 

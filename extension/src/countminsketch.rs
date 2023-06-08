@@ -1,4 +1,4 @@
-use pgx::*;
+use pgrx::*;
 
 use aggregate_builder::aggregate;
 use countminsketch::{CountMinHashFn, CountMinSketch as CountMinSketchInternal};

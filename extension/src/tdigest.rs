@@ -1,6 +1,6 @@
 use std::{convert::TryInto, ops::Deref};
 
-use pgx::*;
+use pgrx::*;
 
 use crate::{
     accessors::{
@@ -22,7 +22,7 @@ pub fn tdigest_trans(
     state: Internal,
     size: i32,
     value: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     tdigest_trans_inner(unsafe { state.to_inner() }, size, value, fcinfo).internal()
 }
@@ -30,7 +30,7 @@ pub fn tdigest_trans_inner(
     state: Option<Inner<tdigest::Builder>>,
     size: i32,
     value: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<tdigest::Builder>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -60,7 +60,7 @@ pub fn tdigest_trans_inner(
 pub fn tdigest_combine(
     state1: Internal,
     state2: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     unsafe { tdigest_combine_inner(state1.to_inner(), state2.to_inner(), fcinfo).internal() }
 }
@@ -68,7 +68,7 @@ pub fn tdigest_combine(
 pub fn tdigest_combine_inner(
     state1: Option<Inner<tdigest::Builder>>,
     state2: Option<Inner<tdigest::Builder>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<tdigest::Builder>> {
     unsafe {
         in_aggregate_context(fcinfo, || match (state1, state2) {
@@ -182,7 +182,7 @@ impl<'input> TDigest<'input> {
 
 // PG function to generate a user-facing TDigest object from an internal tdigest::Builder.
 #[pg_extern(immutable, parallel_safe)]
-fn tdigest_final(state: Internal, fcinfo: pg_sys::FunctionCallInfo) -> Option<TDigest<'static>> {
+fn tdigest_final(state: Internal, fcinfo: pgrx::pg_sys::FunctionCallInfo) -> Option<TDigest<'static>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
             let state: &mut tdigest::Builder = match state.get_mut() {
@@ -221,14 +221,14 @@ extension_sql!(
 pub fn tdigest_compound_trans(
     state: Internal,
     value: Option<TDigest<'static>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     tdigest_compound_trans_inner(unsafe { state.to_inner() }, value, fcinfo).internal()
 }
 pub fn tdigest_compound_trans_inner(
     state: Option<Inner<InternalTDigest>>,
     value: Option<TDigest<'static>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<InternalTDigest>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -253,7 +253,7 @@ pub fn tdigest_compound_trans_inner(
 pub fn tdigest_compound_combine(
     state1: Internal,
     state2: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     unsafe {
         tdigest_compound_combine_inner(state1.to_inner(), state2.to_inner(), fcinfo).internal()
@@ -262,7 +262,7 @@ pub fn tdigest_compound_combine(
 pub fn tdigest_compound_combine_inner(
     state1: Option<Inner<InternalTDigest>>,
     state2: Option<Inner<InternalTDigest>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<InternalTDigest>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -287,14 +287,14 @@ pub fn tdigest_compound_combine_inner(
 #[pg_extern(immutable, parallel_safe)]
 fn tdigest_compound_final(
     state: Internal,
-    _fcinfo: pg_sys::FunctionCallInfo,
+    _fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<TDigest<'static>> {
     let state: Option<&InternalTDigest> = unsafe { state.get() };
     state.map(|state| TDigest::from_internal_tdigest(state.deref()))
 }
 
 #[pg_extern(immutable, parallel_safe)]
-fn tdigest_compound_serialize(state: Internal, _fcinfo: pg_sys::FunctionCallInfo) -> bytea {
+fn tdigest_compound_serialize(state: Internal, _fcinfo: pgrx::pg_sys::FunctionCallInfo) -> bytea {
     let state: Inner<InternalTDigest> = unsafe { state.to_inner().unwrap() };
     crate::do_serialize!(state)
 }
@@ -657,7 +657,7 @@ mod tests {
 
             let mut control = state.unwrap();
             let buffer = tdigest_serialize(Inner::from(control.clone()).internal().unwrap());
-            let buffer = pgx::varlena::varlena_to_byte_slice(buffer.0.cast_mut_ptr());
+            let buffer = pgrx::varlena::varlena_to_byte_slice(buffer.0.cast_mut_ptr());
 
             let expected = [
                 1, 1, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 128, 69, 192, 1, 0, 0, 0, 0, 0, 0, 0,
@@ -669,9 +669,9 @@ mod tests {
             ];
             assert_eq!(buffer, expected);
 
-            let expected = pgx::varlena::rust_byte_slice_to_bytea(&expected);
+            let expected = pgrx::varlena::rust_byte_slice_to_bytea(&expected);
             let mut new_state =
-                tdigest_deserialize_inner(bytea(pg_sys::Datum::from(expected.as_ptr())));
+                tdigest_deserialize_inner(bytea(pgrx::pg_sys::Datum::from(expected.as_ptr())));
 
             assert_eq!(new_state.build(), control.build());
         }

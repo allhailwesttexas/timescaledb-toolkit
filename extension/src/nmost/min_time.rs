@@ -1,4 +1,4 @@
-use pgx::{iter::SetOfIterator, *};
+use pgrx::{iter::SetOfIterator, *};
 
 use crate::nmost::*;
 
@@ -11,14 +11,14 @@ use crate::{
     ron_inout_funcs,
 };
 
-type MinTimeTransType = NMostTransState<pg_sys::TimestampTz>;
+type MinTimeTransType = NMostTransState<pgrx::pg_sys::TimestampTz>;
 
 pg_type! {
     #[derive(Debug)]
     struct MinTimes <'input> {
         capacity : u32,
         elements : u32,
-        values : [pg_sys::TimestampTz; self.elements],
+        values : [pgrx::pg_sys::TimestampTz; self.elements],
     }
 }
 ron_inout_funcs!(MinTimes);
@@ -41,7 +41,7 @@ pub fn min_n_time_trans(
     state: Internal,
     value: crate::raw::TimestampTz,
     capacity: i64,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     nmost_trans_function(
         unsafe { state.to_inner::<MinTimeTransType>() },
@@ -56,7 +56,7 @@ pub fn min_n_time_trans(
 pub fn min_n_time_rollup_trans(
     state: Internal,
     value: MinTimes<'static>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     nmost_rollup_trans_function(
         unsafe { state.to_inner::<MinTimeTransType>() },

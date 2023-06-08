@@ -1,5 +1,5 @@
 use asap::*;
-use pgx::*;
+use pgrx::*;
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -25,7 +25,7 @@ pub fn asap_trans(
     ts: Option<crate::raw::TimestampTz>,
     val: Option<f64>,
     resolution: i32,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     asap_trans_internal(unsafe { state.to_inner() }, ts, val, resolution, fcinfo).internal()
 }
@@ -34,7 +34,7 @@ pub fn asap_trans_internal(
     ts: Option<crate::raw::TimestampTz>,
     val: Option<f64>,
     resolution: i32,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<ASAPTransState>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -76,13 +76,13 @@ impl ASAPTransState {
 #[pg_extern(immutable, parallel_safe)]
 fn asap_final(
     state: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Timevector_TSTZ_F64<'static>> {
     asap_final_inner(unsafe { state.to_inner() }, fcinfo)
 }
 fn asap_final_inner(
     state: Option<Inner<ASAPTransState>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Timevector_TSTZ_F64<'static>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -195,7 +195,7 @@ extension_sql!(
 #[pg_schema]
 mod tests {
     use approx::assert_relative_eq;
-    use pgx::*;
+    use pgrx::*;
     use pgx_macros::pg_test;
 
     #[pg_test]

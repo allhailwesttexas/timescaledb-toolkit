@@ -1,4 +1,4 @@
-use pgx::*;
+use pgrx::*;
 
 use serde::{Deserialize, Serialize};
 
@@ -149,7 +149,7 @@ impl GaugeSummaryTransState {
         for p in iter {
             summary
                 .add_point(p)
-                .unwrap_or_else(|e| pgx::error!("{}", e));
+                .unwrap_or_else(|e| pgrx::error!("{}", e));
         }
         self.point_buffer.clear();
         // TODO build method should check validity
@@ -180,7 +180,7 @@ impl GaugeSummaryTransState {
         for sum in sum_iter {
             new_summary
                 .combine(&sum)
-                .unwrap_or_else(|e| pgx::error!("{}", e));
+                .unwrap_or_else(|e| pgrx::error!("{}", e));
         }
         self.summary_buffer.push(new_summary.build());
     }
@@ -208,7 +208,7 @@ fn gauge_agg_trans(
     ts: Option<crate::raw::TimestampTz>,
     val: Option<f64>,
     bounds: Option<tstzrange>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     gauge_agg_trans_inner(unsafe { state.to_inner() }, ts, val, bounds, fcinfo).internal()
 }
@@ -217,7 +217,7 @@ fn gauge_agg_trans_inner(
     ts: Option<crate::raw::TimestampTz>,
     val: Option<f64>,
     bounds: Option<tstzrange>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<GaugeSummaryTransState>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -249,7 +249,7 @@ fn gauge_agg_trans_no_bounds(
     state: Internal,
     ts: Option<crate::raw::TimestampTz>,
     val: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     gauge_agg_trans_inner(unsafe { state.to_inner() }, ts, val, None, fcinfo).internal()
 }
@@ -258,14 +258,14 @@ fn gauge_agg_trans_no_bounds(
 fn gauge_agg_summary_trans<'a>(
     state: Internal,
     value: Option<GaugeSummary<'a>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     gauge_agg_summary_trans_inner(unsafe { state.to_inner() }, value, fcinfo).internal()
 }
 fn gauge_agg_summary_trans_inner(
     state: Option<Inner<GaugeSummaryTransState>>,
     value: Option<GaugeSummary>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<GaugeSummaryTransState>> {
     unsafe {
         in_aggregate_context(fcinfo, || match (state, value) {
@@ -287,14 +287,14 @@ fn gauge_agg_summary_trans_inner(
 fn gauge_agg_combine(
     state1: Internal,
     state2: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     unsafe { gauge_agg_combine_inner(state1.to_inner(), state2.to_inner(), fcinfo).internal() }
 }
 fn gauge_agg_combine_inner(
     state1: Option<Inner<GaugeSummaryTransState>>,
     state2: Option<Inner<GaugeSummaryTransState>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<GaugeSummaryTransState>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -326,13 +326,13 @@ fn gauge_agg_combine_inner(
 #[pg_extern(immutable, parallel_safe, schema = "toolkit_experimental")]
 fn gauge_agg_final(
     state: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<GaugeSummary<'static>> {
     gauge_agg_final_inner(unsafe { state.to_inner() }, fcinfo)
 }
 fn gauge_agg_final_inner(
     state: Option<Inner<GaugeSummaryTransState>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<GaugeSummary<'static>> {
     unsafe {
         in_aggregate_context(fcinfo, || {

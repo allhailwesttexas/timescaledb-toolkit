@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use pgx::*;
+use pgrx::*;
 
 use crate::{
     accessors::{
@@ -189,7 +189,7 @@ impl CounterSummaryTransState {
         for p in iter {
             summary
                 .add_point(p)
-                .unwrap_or_else(|e| pgx::error!("{}", e));
+                .unwrap_or_else(|e| pgrx::error!("{}", e));
         }
         self.point_buffer.clear();
         // TODO build method should check validity
@@ -220,7 +220,7 @@ impl CounterSummaryTransState {
         for sum in sum_iter {
             new_summary
                 .combine(sum)
-                .unwrap_or_else(|e| pgx::error!("{}", e));
+                .unwrap_or_else(|e| pgrx::error!("{}", e));
         }
         self.summary_buffer = vec![new_summary.build()];
     }
@@ -248,7 +248,7 @@ pub fn counter_agg_trans(
     ts: Option<crate::raw::TimestampTz>,
     val: Option<f64>,
     bounds: Option<tstzrange>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     counter_agg_trans_inner(unsafe { state.to_inner() }, ts, val, bounds, fcinfo).internal()
 }
@@ -257,7 +257,7 @@ pub fn counter_agg_trans_inner(
     ts: Option<crate::raw::TimestampTz>,
     val: Option<f64>,
     bounds: Option<tstzrange>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<CounterSummaryTransState>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -289,7 +289,7 @@ pub fn counter_agg_trans_no_bounds(
     state: Internal,
     ts: Option<crate::raw::TimestampTz>,
     val: Option<f64>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     counter_agg_trans_inner(unsafe { state.to_inner() }, ts, val, None, fcinfo).internal()
 }
@@ -298,14 +298,14 @@ pub fn counter_agg_trans_no_bounds(
 pub fn counter_agg_summary_trans<'a>(
     state: Internal,
     value: Option<CounterSummary<'a>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     counter_agg_summary_trans_inner(unsafe { state.to_inner() }, value, fcinfo).internal()
 }
 pub fn counter_agg_summary_trans_inner(
     state: Option<Inner<CounterSummaryTransState>>,
     value: Option<CounterSummary>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<CounterSummaryTransState>> {
     unsafe {
         in_aggregate_context(fcinfo, || match (state, value) {
@@ -331,14 +331,14 @@ pub fn counter_agg_summary_trans_inner(
 pub fn counter_agg_combine(
     state1: Internal,
     state2: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Internal> {
     unsafe { counter_agg_combine_inner(state1.to_inner(), state2.to_inner(), fcinfo).internal() }
 }
 pub fn counter_agg_combine_inner(
     state1: Option<Inner<CounterSummaryTransState>>,
     state2: Option<Inner<CounterSummaryTransState>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<Inner<CounterSummaryTransState>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -370,13 +370,13 @@ pub fn counter_agg_combine_inner(
 #[pg_extern(immutable, parallel_safe)]
 fn counter_agg_final(
     state: Internal,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<CounterSummary<'static>> {
     counter_agg_final_inner(unsafe { state.to_inner() }, fcinfo)
 }
 fn counter_agg_final_inner(
     state: Option<Inner<CounterSummaryTransState>>,
-    fcinfo: pg_sys::FunctionCallInfo,
+    fcinfo: pgrx::pg_sys::FunctionCallInfo,
 ) -> Option<CounterSummary<'static>> {
     unsafe {
         in_aggregate_context(fcinfo, || {
@@ -890,7 +890,7 @@ pub enum Method {
 pub fn method_kind(method: &str) -> Method {
     match as_method(method) {
         Some(method) => method,
-        None => pgx::error!("unknown analysis method. Valid methods are 'prometheus'"),
+        None => pgrx::error!("unknown analysis method. Valid methods are 'prometheus'"),
     }
 }
 
@@ -1195,7 +1195,7 @@ mod tests {
             let mut control = state.unwrap();
             let buffer =
                 counter_summary_trans_serialize(Inner::from(control.clone()).internal().unwrap());
-            let buffer = pgx::varlena::varlena_to_byte_slice(buffer.0.cast_mut_ptr());
+            let buffer = pgrx::varlena::varlena_to_byte_slice(buffer.0.cast_mut_ptr());
 
             let expected = [
                 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 96, 194, 134, 7, 62, 2, 0, 0, 0, 0, 0, 0, 0, 36,
@@ -1209,8 +1209,8 @@ mod tests {
             ];
             assert_eq!(buffer, expected);
 
-            let expected = pgx::varlena::rust_byte_slice_to_bytea(&expected);
-            let new_state = counter_summary_trans_deserialize_inner(bytea(pg_sys::Datum::from(
+            let expected = pgrx::varlena::rust_byte_slice_to_bytea(&expected);
+            let new_state = counter_summary_trans_deserialize_inner(bytea(pgrx::pg_sys::Datum::from(
                 expected.as_ptr(),
             )));
 
@@ -1791,7 +1791,7 @@ mod tests {
 
 #[cfg(any(test, feature = "pg_test"))]
 pub(crate) mod testing {
-    pub fn decrease(client: &mut pgx::spi::SpiClient) {
+    pub fn decrease(client: &mut pgrx::spi::SpiClient) {
         client
             .update(
                 "CREATE TABLE test(ts timestamptz, val DOUBLE PRECISION)",
@@ -1811,7 +1811,7 @@ pub(crate) mod testing {
             .unwrap();
     }
 
-    pub fn increase(client: &mut pgx::spi::SpiClient) {
+    pub fn increase(client: &mut pgrx::spi::SpiClient) {
         client
             .update(
                 "CREATE TABLE test(ts timestamptz, val DOUBLE PRECISION)",
@@ -1831,7 +1831,7 @@ pub(crate) mod testing {
             .unwrap();
     }
 
-    pub fn decrease_then_increase_to_same_value(client: &mut pgx::spi::SpiClient) {
+    pub fn decrease_then_increase_to_same_value(client: &mut pgrx::spi::SpiClient) {
         client
             .update(
                 "CREATE TABLE test(ts timestamptz, val DOUBLE PRECISION)",
@@ -1852,7 +1852,7 @@ pub(crate) mod testing {
             .unwrap();
     }
 
-    pub fn increase_then_decrease_to_same_value(client: &mut pgx::spi::SpiClient) {
+    pub fn increase_then_decrease_to_same_value(client: &mut pgrx::spi::SpiClient) {
         client
             .update(
                 "CREATE TABLE test(ts timestamptz, val DOUBLE PRECISION)",
@@ -1873,7 +1873,7 @@ pub(crate) mod testing {
             .unwrap();
     }
 
-    pub fn make_test_table(client: &mut pgx::spi::SpiClient, name: &str) {
+    pub fn make_test_table(client: &mut pgrx::spi::SpiClient, name: &str) {
         client
             .update(
                 &format!(
